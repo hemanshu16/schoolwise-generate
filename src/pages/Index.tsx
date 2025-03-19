@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import DistrictSelector from "@/components/selection/DistrictSelector";
 import TalukaSelector from "@/components/selection/TalukaSelector";
-import SchoolSelector from "@/components/selection/SchoolSelector";
+import SchoolList from "@/components/selection/SchoolList";
 import SelectionBadge from "@/components/ui/SelectionBadge";
 import PinAuth from "@/components/auth/PinAuth";
 import ReportView from "@/components/reports/ReportView";
@@ -17,9 +18,10 @@ const Index = () => {
   const [selectedTalukaId, setSelectedTalukaId] = useState<string | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   
-  // Authentication state
-  const [authStep, setAuthStep] = useState<"district" | "taluka" | "school" | null>(null);
+  // Authentication and view state
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentAuthEntity, setCurrentAuthEntity] = useState<"district" | "taluka" | "school" | null>(null);
   
   // Helpers for entity names
   const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
@@ -28,50 +30,56 @@ const Index = () => {
   
   // Determine current selection step
   const showTalukaSelector = !!selectedDistrictId;
-  const showSchoolSelector = !!selectedTalukaId;
-  const showAuthentication = (
-    (selectedDistrictId && !selectedTalukaId && !selectedSchoolId) || 
-    (selectedTalukaId && !selectedSchoolId) || 
-    selectedSchoolId
-  );
+  const showSchoolList = !!selectedTalukaId;
   
   // Delayed mounting for UI elements - explicitly convert to boolean
   const mountTalukaSelector = useDelayedMount(Boolean(showTalukaSelector));
-  const mountSchoolSelector = useDelayedMount(Boolean(showSchoolSelector));
-  const mountAuthentication = useDelayedMount(Boolean(showAuthentication));
+  const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
   
   // Handlers
   const handleDistrictSelect = (districtId: string) => {
     setSelectedDistrictId(districtId);
     setSelectedTalukaId(null);
     setSelectedSchoolId(null);
-    setAuthStep("district");
     setIsAuthenticated(false);
+    setCurrentAuthEntity(null);
   };
   
   const handleTalukaSelect = (talukaId: string) => {
     setSelectedTalukaId(talukaId);
     setSelectedSchoolId(null);
-    setAuthStep("taluka");
     setIsAuthenticated(false);
+    setCurrentAuthEntity(null);
   };
   
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setAuthStep("school");
-    setIsAuthenticated(false);
+    setShowAuthModal(true);
+    setCurrentAuthEntity("school");
+  };
+  
+  const handleGenerateDistrictReport = () => {
+    setShowAuthModal(true);
+    setCurrentAuthEntity("district");
+  };
+  
+  const handleGenerateTalukaReport = () => {
+    setShowAuthModal(true);
+    setCurrentAuthEntity("taluka");
   };
   
   const handleAuthenticate = () => {
     setIsAuthenticated(true);
+    setShowAuthModal(false);
   };
   
   const handleReset = () => {
     setSelectedDistrictId(null);
     setSelectedTalukaId(null);
     setSelectedSchoolId(null);
-    setAuthStep(null);
+    setShowAuthModal(false);
     setIsAuthenticated(false);
+    setCurrentAuthEntity(null);
   };
 
   return (
@@ -99,7 +107,7 @@ const Index = () => {
                 />
               )}
               
-              {selectedSchoolId && (
+              {selectedSchoolId && isAuthenticated && (
                 <SelectionBadge 
                   label="School"
                   value={selectedSchool?.name}
@@ -129,6 +137,17 @@ const Index = () => {
                     onSelect={handleDistrictSelect} 
                     selectedDistrictId={selectedDistrictId}
                   />
+                  
+                  {selectedDistrictId && !selectedTalukaId && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={handleGenerateDistrictReport}
+                        className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                      >
+                        Generate District Report
+                      </button>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Step 2: Taluka Selection */}
@@ -139,45 +158,65 @@ const Index = () => {
                       onSelect={handleTalukaSelect}
                       selectedTalukaId={selectedTalukaId}
                     />
+                    
+                    {selectedTalukaId && (
+                      <div className="mt-4 flex justify-center">
+                        <button
+                          onClick={handleGenerateTalukaReport}
+                          className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                        >
+                          Generate Taluka Report
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
                 
-                {/* Step 3: School Selection */}
-                {mountSchoolSelector && selectedTalukaId && (
-                  <div className="selection-step">
-                    <SchoolSelector
+                {/* Step 3: School List */}
+                {mountSchoolList && selectedTalukaId && (
+                  <div className="selection-step mt-8">
+                    <SchoolList
                       talukaId={selectedTalukaId}
-                      onSelect={handleSchoolSelect}
-                      selectedSchoolId={selectedSchoolId}
+                      onSelectSchool={handleSchoolSelect}
                     />
                   </div>
                 )}
                 
-                {/* Authentication step */}
-                {mountAuthentication && authStep && (
-                  <div className="selection-step mt-8 pt-8 border-t border-border/60">
-                    <PinAuth
-                      entityType={authStep}
-                      entityId={
-                        authStep === "district" 
-                          ? selectedDistrictId 
-                          : authStep === "taluka" 
-                            ? selectedTalukaId 
-                            : selectedSchoolId
-                      }
-                      onAuthenticate={handleAuthenticate}
-                    />
+                {/* Authentication Modal */}
+                {showAuthModal && currentAuthEntity && (
+                  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-background rounded-lg shadow-lg max-w-md w-full p-6 animate-scale-in">
+                      <PinAuth
+                        entityType={currentAuthEntity}
+                        entityId={
+                          currentAuthEntity === "district" 
+                            ? selectedDistrictId 
+                            : currentAuthEntity === "taluka" 
+                              ? selectedTalukaId 
+                              : selectedSchoolId
+                        }
+                        onAuthenticate={handleAuthenticate}
+                      />
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          onClick={() => setShowAuthModal(false)}
+                          className="text-sm text-muted-foreground hover:text-foreground"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
               /* Report View */
               <ReportView 
-                type={authStep!} 
+                type={currentAuthEntity!} 
                 name={
-                  authStep === "district" 
+                  currentAuthEntity === "district" 
                     ? selectedDistrict?.name || "" 
-                    : authStep === "taluka" 
+                    : currentAuthEntity === "taluka" 
                       ? selectedTaluka?.name || "" 
                       : selectedSchool?.name || ""
                 }

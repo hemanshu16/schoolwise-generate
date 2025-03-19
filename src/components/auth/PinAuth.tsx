@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Key, LockKeyhole } from "lucide-react";
+import { AlertCircle, FileSpreadsheet, Key, LockKeyhole } from "lucide-react";
 import { useFadeAnimation } from "@/utils/animations";
 import { toast } from "sonner";
 import { districts, schools, talukas } from "@/utils/mock-data";
@@ -10,10 +10,17 @@ interface PinAuthProps {
   entityType: "district" | "taluka" | "school";
   entityId: string | null;
   onAuthenticate: () => void;
+  authPurpose?: "report" | "sheet";
   className?: string;
 }
 
-const PinAuth = ({ entityType, entityId, onAuthenticate, className }: PinAuthProps) => {
+const PinAuth = ({ 
+  entityType, 
+  entityId, 
+  onAuthenticate, 
+  authPurpose = "report",
+  className 
+}: PinAuthProps) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +51,17 @@ const PinAuth = ({ entityType, entityId, onAuthenticate, className }: PinAuthPro
     // Simulate an API call
     setTimeout(() => {
       if (pin === correctPin) {
-        toast.success(`Successfully authenticated for ${entityName}`);
+        const message = authPurpose === "report" 
+          ? `Successfully authenticated for ${entityName} report`
+          : `Google Sheet access granted for ${entityName}`;
+        toast.success(message);
         onAuthenticate();
       } else {
+        const errorMessage = authPurpose === "report"
+          ? "Authentication failed. Please check your PIN and try again."
+          : "Google Sheet access denied. Invalid DICE code.";
         setError("Incorrect PIN. Please try again.");
-        toast.error("Authentication failed. Please check your PIN and try again.");
+        toast.error(errorMessage);
       }
       setIsSubmitting(false);
     }, 800);
@@ -69,24 +82,33 @@ const PinAuth = ({ entityType, entityId, onAuthenticate, className }: PinAuthPro
     <div className={cn("w-full max-w-sm mx-auto", animation, className)}>
       <div className="mb-6 text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-primary/10 text-primary">
-          <LockKeyhole className="w-8 h-8" />
+          {authPurpose === "report" ? (
+            <LockKeyhole className="w-8 h-8" />
+          ) : (
+            <FileSpreadsheet className="w-8 h-8" />
+          )}
         </div>
-        <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          {authPurpose === "report" ? "Authentication Required" : "Enter DICE Code"}
+        </h2>
         <p className="text-muted-foreground">
-          Please enter the PIN for
-          <span className="font-medium text-foreground"> {getEntityName()} {entityType}</span>
+          {authPurpose === "report" 
+            ? `Please enter the PIN for ${getEntityName()} ${entityType}`
+            : `Please enter the DICE code for ${getEntityName()} to access Google Sheet`
+          }
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="pin" className="block text-sm font-medium mb-2 flex items-center gap-1.5">
-            <Key className="w-3.5 h-3.5" /> Security PIN
+            <Key className="w-3.5 h-3.5" /> 
+            {authPurpose === "report" ? "Security PIN" : "DICE Code"}
           </label>
           <input
             id="pin"
             type="password"
-            placeholder="Enter PIN"
+            placeholder={authPurpose === "report" ? "Enter PIN" : "Enter DICE code"}
             value={pin}
             onChange={(e) => {
               setPin(e.target.value);
@@ -116,7 +138,9 @@ const PinAuth = ({ entityType, entityId, onAuthenticate, className }: PinAuthPro
             (isSubmitting || !pin.trim()) && "opacity-70 cursor-not-allowed"
           )}
         >
-          {isSubmitting ? "Authenticating..." : "Authenticate"}
+          {isSubmitting 
+            ? (authPurpose === "report" ? "Authenticating..." : "Verifying...") 
+            : (authPurpose === "report" ? "Authenticate" : "Access Google Sheet")}
         </button>
       </form>
     </div>
