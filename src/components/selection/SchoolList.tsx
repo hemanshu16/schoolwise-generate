@@ -6,6 +6,12 @@ import { useFadeAnimation } from "@/utils/animations";
 import { FileSpreadsheet, School } from "lucide-react";
 import PinAuth from "../auth/PinAuth";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogOverlay,
+  DialogPortal
+} from "@/components/ui/dialog";
 
 interface SchoolListProps {
   talukaId: string;
@@ -65,64 +71,68 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
         </div>
       </div>
 
-      {showSheetAuth ? (
-        <div className="mt-4 p-4 border border-border/60 rounded-lg bg-background/50">
-          <PinAuth
-            entityType="school"
-            entityId={selectedSchoolId}
-            onAuthenticate={handleSheetAuthenticated}
-            authPurpose="sheet"
-          />
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
-            <thead>
-              <tr className="bg-muted/30">
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">School Name</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Google Sheet</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Actions</th>
+      {/* Sheet Access Authentication Modal */}
+      <Dialog open={showSheetAuth} onOpenChange={setShowSheetAuth}>
+        <DialogPortal>
+          <DialogOverlay className="bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="sm:max-w-md">
+            <PinAuth
+              entityType="school"
+              entityId={selectedSchoolId}
+              onAuthenticate={handleSheetAuthenticated}
+              authPurpose="sheet"
+            />
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
+          <thead>
+            <tr className="bg-muted/30">
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">School Name</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Google Sheet</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredSchools.map((school, index) => (
+              <tr 
+                key={school.id} 
+                className={cn(
+                  "border-t border-border/20 hover:bg-muted/20 transition-colors",
+                )}
+              >
+                <td className="px-4 py-3 font-medium">{school.name}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleSheetClick(school.id)}
+                    className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span className="underline underline-offset-2">Access Google Sheet</span>
+                  </button>
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleGenerateReport(school.id)}
+                    className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Generate Report
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredSchools.map((school, index) => (
-                <tr 
-                  key={school.id} 
-                  className={cn(
-                    "border-t border-border/20 hover:bg-muted/20 transition-colors",
-                  )}
-                >
-                  <td className="px-4 py-3 font-medium">{school.name}</td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleSheetClick(school.id)}
-                      className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors"
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      <span className="underline underline-offset-2">Access Google Sheet</span>
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleGenerateReport(school.id)}
-                      className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Generate Report
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredSchools.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
-                    No schools found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+            {filteredSchools.length === 0 && (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
+                  No schools found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
