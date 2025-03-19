@@ -3,7 +3,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Key, LockKeyhole } from "lucide-react";
 import { useFadeAnimation } from "@/utils/animations";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { districts, schools, talukas } from "@/utils/mock-data";
 
 interface PinAuthProps {

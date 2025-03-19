@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
@@ -36,10 +35,10 @@ const Index = () => {
     selectedSchoolId
   );
   
-  // Delayed mounting for UI elements
-  const mountTalukaSelector = useDelayedMount(showTalukaSelector);
-  const mountSchoolSelector = useDelayedMount(showSchoolSelector);
-  const mountAuthentication = useDelayedMount(showAuthentication);
+  // Delayed mounting for UI elements - explicitly convert to boolean
+  const mountTalukaSelector = useDelayedMount(Boolean(showTalukaSelector));
+  const mountSchoolSelector = useDelayedMount(Boolean(showSchoolSelector));
+  const mountAuthentication = useDelayedMount(Boolean(showAuthentication));
   
   // Handlers
   const handleDistrictSelect = (districtId: string) => {
