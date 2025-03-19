@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { schools } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
@@ -73,17 +72,14 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
 
       {/* Sheet Access Authentication Modal */}
       <Dialog open={showSheetAuth} onOpenChange={setShowSheetAuth}>
-        <DialogPortal>
-          <DialogOverlay className="bg-black/50 backdrop-blur-sm" />
-          <DialogContent className="sm:max-w-md">
-            <PinAuth
-              entityType="school"
-              entityId={selectedSchoolId}
-              onAuthenticate={handleSheetAuthenticated}
-              authPurpose="sheet"
-            />
-          </DialogContent>
-        </DialogPortal>
+        <DialogContent className="sm:max-w-md">
+          <PinAuth
+            entityType="school"
+            entityId={selectedSchoolId}
+            onAuthenticate={handleSheetAuthenticated}
+            authPurpose="sheet"
+          />
+        </DialogContent>
       </Dialog>
 
       <div className="overflow-x-auto">

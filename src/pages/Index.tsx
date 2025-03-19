@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
@@ -11,6 +10,7 @@ import ReportView from "@/components/reports/ReportView";
 import { districts, schools, talukas } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
 import { useDelayedMount } from "@/utils/animations";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Index = () => {
   // Selection state
@@ -183,31 +183,29 @@ const Index = () => {
                 )}
                 
                 {/* Authentication Modal */}
-                {showAuthModal && currentAuthEntity && (
-                  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-background rounded-lg shadow-lg max-w-md w-full p-6 animate-scale-in">
-                      <PinAuth
-                        entityType={currentAuthEntity}
-                        entityId={
-                          currentAuthEntity === "district" 
-                            ? selectedDistrictId 
-                            : currentAuthEntity === "taluka" 
-                              ? selectedTalukaId 
-                              : selectedSchoolId
-                        }
-                        onAuthenticate={handleAuthenticate}
-                      />
-                      <div className="mt-4 flex justify-end">
-                        <button
-                          onClick={() => setShowAuthModal(false)}
-                          className="text-sm text-muted-foreground hover:text-foreground"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+                  <DialogContent className="bg-background rounded-lg shadow-lg max-w-md w-full animate-scale-in">
+                    <PinAuth
+                      entityType={currentAuthEntity}
+                      entityId={
+                        currentAuthEntity === "district" 
+                          ? selectedDistrictId 
+                          : currentAuthEntity === "taluka" 
+                            ? selectedTalukaId 
+                            : selectedSchoolId
+                      }
+                      onAuthenticate={handleAuthenticate}
+                    />
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={() => setShowAuthModal(false)}
+                        className="text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        Cancel
+                      </button>
                     </div>
-                  </div>
-                )}
+                  </DialogContent>
+                </Dialog>
               </div>
             ) : (
               /* Report View */
