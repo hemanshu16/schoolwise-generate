@@ -10,7 +10,8 @@ import {
   Dialog,
   DialogContent,
   DialogOverlay,
-  DialogPortal
+  DialogPortal,
+  DialogTitle
 } from "@/components/ui/dialog";
 
 interface SchoolListProps {
@@ -82,6 +83,7 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
       {/* Sheet Access Authentication Modal */}
       <Dialog open={showSheetAuth} onOpenChange={setShowSheetAuth}>
         <DialogContent className="sm:max-w-md">
+          <DialogTitle className="sr-only">School Sheet Authentication</DialogTitle>
           <PinAuth
             entityType="school"
             entityId={selectedSchoolId}
@@ -94,6 +96,7 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
       {/* Report Authentication Modal */}
       <Dialog open={showReportAuth} onOpenChange={setShowReportAuth}>
         <DialogContent className="sm:max-w-md">
+          <DialogTitle className="sr-only">School Report Authentication</DialogTitle>
           <PinAuth
             entityType="school"
             entityId={selectedSchoolId}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
+import { DialogTitle } from "@/components/ui/dialog";
 
 export type OfficerPermission = "district" | "taluka" | "none";
 
@@ -39,6 +40,7 @@ const OfficerAuth = ({ onAuthenticate }: OfficerAuthProps) => {
 
   return (
     <div className="w-full max-w-md mx-auto p-6">
+      <DialogTitle className="sr-only">Officer Authentication</DialogTitle>
       <div className="mb-6 text-center">
         <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <Lock className="w-8 h-8 text-primary" />

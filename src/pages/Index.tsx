@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
@@ -11,7 +10,7 @@ import ReportView from "@/components/reports/ReportView";
 import { districts, schools, talukas } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
 import { useDelayedMount } from "@/utils/animations";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import RoleSelector from "@/components/selection/RoleSelector";
 import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
 
@@ -245,20 +244,26 @@ const Index = () => {
                 <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
                   <DialogContent className="sm:max-w-md">
                     {userRole === "officer" && !currentAuthEntity ? (
-                      <OfficerAuth onAuthenticate={handleOfficerAuthenticate} />
+                      <>
+                        <DialogTitle className="sr-only">Officer Authentication</DialogTitle>
+                        <OfficerAuth onAuthenticate={handleOfficerAuthenticate} />
+                      </>
                     ) : (
-                      <PinAuth
-                        entityType={currentAuthEntity}
-                        entityId={
-                          currentAuthEntity === "district" 
-                            ? selectedDistrictId 
-                            : currentAuthEntity === "taluka" 
-                              ? selectedTalukaId 
-                              : selectedSchoolId
-                        }
-                        onAuthenticate={handleAuthenticate}
-                        requireExamName={currentAuthEntity === "school"}
-                      />
+                      <>
+                        <DialogTitle className="sr-only">Authentication Required</DialogTitle>
+                        <PinAuth
+                          entityType={currentAuthEntity}
+                          entityId={
+                            currentAuthEntity === "district" 
+                              ? selectedDistrictId 
+                              : currentAuthEntity === "taluka" 
+                                ? selectedTalukaId 
+                                : selectedSchoolId
+                          }
+                          onAuthenticate={handleAuthenticate}
+                          requireExamName={currentAuthEntity === "school"}
+                        />
+                      </>
                     )}
                   </DialogContent>
                 </Dialog>
