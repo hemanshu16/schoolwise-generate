@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { schools } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ interface SchoolListProps {
 const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) => {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [showSheetAuth, setShowSheetAuth] = useState(false);
+  const [showReportAuth, setShowReportAuth] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const animation = useFadeAnimation(true);
 
@@ -33,7 +35,7 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
 
   const handleGenerateReport = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    onSelectSchool(schoolId);
+    setShowReportAuth(true);
   };
 
   const handleSheetClick = (schoolId: string) => {
@@ -50,6 +52,13 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
     
     // In a real app, you would redirect to the actual Google Sheet URL
     window.open("https://docs.google.com/spreadsheets/create", "_blank");
+  };
+
+  const handleReportAuthenticated = () => {
+    setShowReportAuth(false);
+    if (selectedSchoolId) {
+      onSelectSchool(selectedSchoolId);
+    }
   };
 
   return (
@@ -78,6 +87,19 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
             entityId={selectedSchoolId}
             onAuthenticate={handleSheetAuthenticated}
             authPurpose="sheet"
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Authentication Modal */}
+      <Dialog open={showReportAuth} onOpenChange={setShowReportAuth}>
+        <DialogContent className="sm:max-w-md">
+          <PinAuth
+            entityType="school"
+            entityId={selectedSchoolId}
+            onAuthenticate={handleReportAuthenticated}
+            authPurpose="report"
+            requireExamName={true}
           />
         </DialogContent>
       </Dialog>

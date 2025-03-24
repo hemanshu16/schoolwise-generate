@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
@@ -17,6 +18,7 @@ const Index = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
   const [selectedTalukaId, setSelectedTalukaId] = useState<string | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [examName, setExamName] = useState<string>("");
   
   // Authentication and view state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -54,8 +56,7 @@ const Index = () => {
   
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setShowAuthModal(true);
-    setCurrentAuthEntity("school");
+    setIsAuthenticated(true); // The authentication is now handled in the SchoolList component
   };
   
   const handleGenerateDistrictReport = () => {
@@ -68,9 +69,12 @@ const Index = () => {
     setCurrentAuthEntity("taluka");
   };
   
-  const handleAuthenticate = () => {
+  const handleAuthenticate = (providedExamName?: string) => {
     setIsAuthenticated(true);
     setShowAuthModal(false);
+    if (providedExamName) {
+      setExamName(providedExamName);
+    }
   };
   
   const handleReset = () => {
@@ -80,6 +84,7 @@ const Index = () => {
     setShowAuthModal(false);
     setIsAuthenticated(false);
     setCurrentAuthEntity(null);
+    setExamName("");
   };
 
   return (
@@ -111,6 +116,14 @@ const Index = () => {
                 <SelectionBadge 
                   label="School"
                   value={selectedSchool?.name}
+                  isActive={true}
+                />
+              )}
+
+              {examName && (
+                <SelectionBadge 
+                  label="Exam"
+                  value={examName}
                   isActive={true}
                 />
               )}
@@ -184,7 +197,7 @@ const Index = () => {
                 
                 {/* Authentication Modal */}
                 <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
-                  <DialogContent className="bg-background rounded-lg shadow-lg max-w-md w-full animate-scale-in">
+                  <DialogContent className="sm:max-w-md">
                     <PinAuth
                       entityType={currentAuthEntity}
                       entityId={
@@ -195,15 +208,8 @@ const Index = () => {
                             : selectedSchoolId
                       }
                       onAuthenticate={handleAuthenticate}
+                      requireExamName={currentAuthEntity === "school"}
                     />
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        onClick={() => setShowAuthModal(false)}
-                        className="text-sm text-muted-foreground hover:text-foreground"
-                      >
-                        Cancel
-                      </button>
-                    </div>
                   </DialogContent>
                 </Dialog>
               </div>
@@ -218,6 +224,7 @@ const Index = () => {
                       ? selectedTaluka?.name || "" 
                       : selectedSchool?.name || ""
                 }
+                examName={examName}
               />
             )}
           </div>
