@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
@@ -18,6 +19,7 @@ const Index = () => {
   // User role state
   const [userRole, setUserRole] = useState<"teacher" | "officer" | null>(null);
   const [officerPermission, setOfficerPermission] = useState<OfficerPermission>("none");
+  const [isOfficerAuthenticated, setIsOfficerAuthenticated] = useState(false);
   
   // Selection state
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
@@ -51,6 +53,7 @@ const Index = () => {
     setSelectedSchoolId(null);
     setIsAuthenticated(false);
     setCurrentAuthEntity(null);
+    setIsOfficerAuthenticated(false);
     
     // If officer, show auth dialog
     if (role === "officer") {
@@ -62,6 +65,7 @@ const Index = () => {
   const handleOfficerAuthenticate = (permission: OfficerPermission) => {
     setOfficerPermission(permission);
     setShowAuthModal(false);
+    setIsOfficerAuthenticated(permission !== "none");
   };
   
   const handleDistrictSelect = (districtId: string) => {
@@ -85,13 +89,25 @@ const Index = () => {
   };
   
   const handleGenerateDistrictReport = () => {
-    setShowAuthModal(true);
-    setCurrentAuthEntity("district");
+    // Skip auth if officer is already authenticated
+    if (isOfficerAuthenticated) {
+      setIsAuthenticated(true);
+      setCurrentAuthEntity("district");
+    } else {
+      setShowAuthModal(true);
+      setCurrentAuthEntity("district");
+    }
   };
   
   const handleGenerateTalukaReport = () => {
-    setShowAuthModal(true);
-    setCurrentAuthEntity("taluka");
+    // Skip auth if officer is already authenticated
+    if (isOfficerAuthenticated) {
+      setIsAuthenticated(true);
+      setCurrentAuthEntity("taluka");
+    } else {
+      setShowAuthModal(true);
+      setCurrentAuthEntity("taluka");
+    }
   };
   
   const handleAuthenticate = (providedExamName?: string) => {
@@ -112,6 +128,7 @@ const Index = () => {
     setIsAuthenticated(false);
     setCurrentAuthEntity(null);
     setExamName("");
+    setIsOfficerAuthenticated(false);
   };
 
   // Determine if report generation buttons should be shown
