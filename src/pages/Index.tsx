@@ -12,8 +12,14 @@ import { districts, schools, talukas } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
 import { useDelayedMount } from "@/utils/animations";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import RoleSelector from "@/components/selection/RoleSelector";
+import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
 
 const Index = () => {
+  // User role state
+  const [userRole, setUserRole] = useState<"teacher" | "officer" | null>(null);
+  const [officerPermission, setOfficerPermission] = useState<OfficerPermission>("none");
+  
   // Selection state
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
   const [selectedTalukaId, setSelectedTalukaId] = useState<string | null>(null);
@@ -39,6 +45,26 @@ const Index = () => {
   const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
   
   // Handlers
+  const handleRoleSelect = (role: "teacher" | "officer") => {
+    setUserRole(role);
+    setSelectedDistrictId(null);
+    setSelectedTalukaId(null);
+    setSelectedSchoolId(null);
+    setIsAuthenticated(false);
+    setCurrentAuthEntity(null);
+    
+    // If officer, show auth dialog
+    if (role === "officer") {
+      setShowAuthModal(true);
+      setCurrentAuthEntity(null);
+    }
+  };
+  
+  const handleOfficerAuthenticate = (permission: OfficerPermission) => {
+    setOfficerPermission(permission);
+    setShowAuthModal(false);
+  };
+  
   const handleDistrictSelect = (districtId: string) => {
     setSelectedDistrictId(districtId);
     setSelectedTalukaId(null);
@@ -78,6 +104,8 @@ const Index = () => {
   };
   
   const handleReset = () => {
+    setUserRole(null);
+    setOfficerPermission("none");
     setSelectedDistrictId(null);
     setSelectedTalukaId(null);
     setSelectedSchoolId(null);
@@ -86,6 +114,10 @@ const Index = () => {
     setCurrentAuthEntity(null);
     setExamName("");
   };
+
+  // Determine if report generation buttons should be shown
+  const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukaId;
+  const showTalukaReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluka") && selectedTalukaId;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pb-12">
@@ -96,6 +128,14 @@ const Index = () => {
           {/* Selection badges */}
           {(selectedDistrictId || selectedTalukaId || selectedSchoolId) && (
             <div className="flex flex-wrap gap-2 mb-8 justify-center animate-fade-in">
+              {userRole && (
+                <SelectionBadge 
+                  label="Role"
+                  value={userRole === "teacher" ? "School Teacher" : "Education Officer"}
+                  isActive={true}
+                />
+              )}
+              
               {selectedDistrictId && (
                 <SelectionBadge 
                   label="District"
@@ -142,7 +182,13 @@ const Index = () => {
             "frosted-glass p-6 max-w-2xl mx-auto",
             isAuthenticated ? "md:max-w-4xl" : ""
           )}>
-            {!isAuthenticated ? (
+            {/* Step 0: Role Selection */}
+            {!userRole && (
+              <RoleSelector onSelectRole={handleRoleSelect} />
+            )}
+            
+            {/* Authentication flows */}
+            {!isAuthenticated && userRole && (
               <div className="space-y-8">
                 {/* Step 1: District Selection */}
                 <div className={cn("selection-step", selectedDistrictId ? "mb-8" : "")}>
@@ -151,7 +197,7 @@ const Index = () => {
                     selectedDistrictId={selectedDistrictId}
                   />
                   
-                  {selectedDistrictId && !selectedTalukaId && (
+                  {showDistrictReportButton && (
                     <div className="mt-4 flex justify-center">
                       <button
                         onClick={handleGenerateDistrictReport}
@@ -172,7 +218,7 @@ const Index = () => {
                       selectedTalukaId={selectedTalukaId}
                     />
                     
-                    {selectedTalukaId && (
+                    {showTalukaReportButton && (
                       <div className="mt-4 flex justify-center">
                         <button
                           onClick={handleGenerateTalukaReport}
@@ -195,28 +241,34 @@ const Index = () => {
                   </div>
                 )}
                 
-                {/* Authentication Modal */}
+                {/* Authentication Modals */}
                 <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
                   <DialogContent className="sm:max-w-md">
-                    <PinAuth
-                      entityType={currentAuthEntity}
-                      entityId={
-                        currentAuthEntity === "district" 
-                          ? selectedDistrictId 
-                          : currentAuthEntity === "taluka" 
-                            ? selectedTalukaId 
-                            : selectedSchoolId
-                      }
-                      onAuthenticate={handleAuthenticate}
-                      requireExamName={currentAuthEntity === "school"}
-                    />
+                    {userRole === "officer" && !currentAuthEntity ? (
+                      <OfficerAuth onAuthenticate={handleOfficerAuthenticate} />
+                    ) : (
+                      <PinAuth
+                        entityType={currentAuthEntity}
+                        entityId={
+                          currentAuthEntity === "district" 
+                            ? selectedDistrictId 
+                            : currentAuthEntity === "taluka" 
+                              ? selectedTalukaId 
+                              : selectedSchoolId
+                        }
+                        onAuthenticate={handleAuthenticate}
+                        requireExamName={currentAuthEntity === "school"}
+                      />
+                    )}
                   </DialogContent>
                 </Dialog>
               </div>
-            ) : (
-              /* Report View */
+            )}
+            
+            {/* Report View */}
+            {isAuthenticated && currentAuthEntity && (
               <ReportView 
-                type={currentAuthEntity!} 
+                type={currentAuthEntity} 
                 name={
                   currentAuthEntity === "district" 
                     ? selectedDistrict?.name || "" 
