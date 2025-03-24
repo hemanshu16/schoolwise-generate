@@ -71,8 +71,19 @@ export const generateReportData = (
   type: "district" | "taluka" | "school",
   name: string
 ): ReportData => {
+  // Add safeguard against null/undefined values
+  if (!type || !name) {
+    console.warn(`Invalid parameters passed to generateReportData: type=${type}, name=${name}`);
+    // Provide default values
+    type = type || "school";
+    name = name || "Unknown";
+  }
+
+  // Now safely use type and name since they have fallback values
+  const typeCapitalized = type.charAt(0).toUpperCase() + type.slice(1);
+  
   return {
-    title: `${name} ${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
+    title: `${name} ${typeCapitalized} Report`,
     description: `Performance overview for ${name} ${type}`,
     stats: {
       totalStudents: Math.floor(Math.random() * 1000) + 500,

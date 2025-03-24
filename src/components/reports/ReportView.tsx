@@ -14,7 +14,11 @@ interface ReportViewProps {
 }
 
 const ReportView = ({ type, name, examName = "", className }: ReportViewProps) => {
-  const [reportData] = useState<ReportData>(() => generateReportData(type, name));
+  // Ensure type and name are valid before calling generateReportData
+  const validType = type || "school";
+  const validName = name || "Unknown";
+  
+  const [reportData] = useState<ReportData>(() => generateReportData(validType, validName));
   
   const chartData = reportData.subjects.map((subject) => ({
     name: subject.name,
@@ -49,7 +53,7 @@ const ReportView = ({ type, name, examName = "", className }: ReportViewProps) =
     <div className={cn("w-full animate-fade-in", className)}>
       <header className="mb-8 text-center">
         <span className="selection-badge bg-primary/10 text-primary border-0 mb-2">
-          {type.charAt(0).toUpperCase() + type.slice(1)} Report
+          {validType.charAt(0).toUpperCase() + validType.slice(1)} Report
         </span>
         <h1 className="text-2xl md:text-3xl font-bold">{reportData.title}</h1>
         <p className="text-muted-foreground mt-2">
