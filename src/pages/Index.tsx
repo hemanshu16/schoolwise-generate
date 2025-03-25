@@ -46,9 +46,6 @@ const Index = () => {
   // Delayed mounting for UI elements - explicitly convert to boolean
   const mountTalukaSelector = useDelayedMount(Boolean(showTalukaSelector));
   const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
-
-  // Determine if we should show the selection UI or the landing page
-  const showSelectionUI = !!userRole;
   
   // Handlers
   const handleRoleSelect = (role: "teacher" | "officer") => {
@@ -145,7 +142,7 @@ const Index = () => {
       <Header />
       
       <main>
-        {!showSelectionUI ? (
+        {!userRole ? (
           <>
             <Hero />
             <Steps />
