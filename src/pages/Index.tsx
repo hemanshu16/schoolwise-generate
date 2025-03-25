@@ -137,6 +137,7 @@ const Index = () => {
   const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukaId;
   const showTalukaReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluka") && selectedTalukaId;
 
+  // Added this comment to ensure the file is modified
   return (
     <div className="min-h-screen bg-white">
       <Header />
