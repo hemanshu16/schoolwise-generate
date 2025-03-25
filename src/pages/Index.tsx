@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
@@ -87,11 +86,10 @@ const Index = () => {
   
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setIsAuthenticated(true); // The authentication is now handled in the SchoolList component
+    setIsAuthenticated(true);
   };
   
   const handleGenerateDistrictReport = () => {
-    // Skip auth if officer is already authenticated
     if (isOfficerAuthenticated) {
       setIsAuthenticated(true);
       setCurrentAuthEntity("district");
@@ -102,7 +100,6 @@ const Index = () => {
   };
   
   const handleGenerateTalukaReport = () => {
-    // Skip auth if officer is already authenticated
     if (isOfficerAuthenticated) {
       setIsAuthenticated(true);
       setCurrentAuthEntity("taluka");
@@ -137,17 +134,19 @@ const Index = () => {
   const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukaId;
   const showTalukaReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluka") && selectedTalukaId;
 
-  // Added this comment to ensure the file is modified
   return (
     <div className="min-h-screen bg-white">
       <Header />
       
       <main>
         {!userRole ? (
-          <>
+          <Container className="py-8">
             <Hero />
+            <div className="mt-8">
+              <RoleSelector onSelectRole={handleRoleSelect} />
+            </div>
             <Steps />
-          </>
+          </Container>
         ) : (
           <Container className="py-8">
             {/* Selection badges */}
