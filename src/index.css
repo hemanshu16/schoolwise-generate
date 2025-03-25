@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 45 100% 50%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -14,11 +14,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 210 100% 50%;
+    --primary: 171 70% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 240 46% 20%;
+    --secondary-foreground: 45 100% 60%;
 
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
@@ -82,15 +82,15 @@
   }
   
   h1 {
-    @apply text-3xl md:text-4xl;
+    @apply text-3xl md:text-4xl text-secondary;
   }
   
   h2 {
-    @apply text-2xl md:text-3xl;
+    @apply text-2xl md:text-3xl text-secondary;
   }
   
   h3 {
-    @apply text-xl md:text-2xl;
+    @apply text-xl md:text-2xl text-secondary;
   }
 }
 
@@ -121,6 +121,38 @@
   
   .input-field {
     @apply h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50;
+  }
+
+  .step-card {
+    @apply bg-white rounded-lg p-6 shadow-md flex flex-col items-center text-center;
+  }
+  
+  .step-number {
+    @apply text-4xl font-bold text-primary mb-2;
+  }
+  
+  .step-title {
+    @apply text-xl font-semibold text-secondary mb-4;
+  }
+  
+  .step-divider {
+    @apply w-full h-1 bg-amber-400 mb-6;
+  }
+  
+  .site-hero {
+    @apply bg-amber-400 py-20 relative overflow-hidden;
+  }
+  
+  .nav-link {
+    @apply px-4 py-2 hover:underline transition-all duration-300;
+  }
+  
+  .nav-link.active {
+    @apply font-bold border-b-2 border-primary;
+  }
+  
+  .wave-pattern {
+    @apply absolute top-0 right-0 w-1/2 h-full opacity-60;
   }
 }
 

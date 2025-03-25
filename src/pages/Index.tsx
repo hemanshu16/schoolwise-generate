@@ -14,6 +14,8 @@ import { useDelayedMount } from "@/utils/animations";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import RoleSelector from "@/components/selection/RoleSelector";
 import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
+import Hero from "@/components/home/Hero";
+import Steps from "@/components/home/Steps";
 
 const Index = () => {
   // User role state
@@ -44,6 +46,9 @@ const Index = () => {
   // Delayed mounting for UI elements - explicitly convert to boolean
   const mountTalukaSelector = useDelayedMount(Boolean(showTalukaSelector));
   const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
+
+  // Determine if we should show the selection UI or the landing page
+  const showSelectionUI = !!userRole;
   
   // Handlers
   const handleRoleSelect = (role: "teacher" | "officer") => {
@@ -136,173 +141,180 @@ const Index = () => {
   const showTalukaReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluka") && selectedTalukaId;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pb-12">
+    <div className="min-h-screen bg-white">
       <Header />
       
       <main>
-        <Container>
-          {/* Selection badges */}
-          {(selectedDistrictId || selectedTalukaId || selectedSchoolId) && (
-            <div className="flex flex-wrap gap-2 mb-8 justify-center animate-fade-in">
-              {userRole && (
-                <SelectionBadge 
-                  label="Role"
-                  value={userRole === "teacher" ? "School Teacher" : "Education Officer"}
-                  isActive={true}
-                />
-              )}
-              
-              {selectedDistrictId && (
-                <SelectionBadge 
-                  label="District"
-                  value={selectedDistrict?.name}
-                  isActive={true}
-                />
-              )}
-              
-              {selectedTalukaId && (
-                <SelectionBadge 
-                  label="Taluka"
-                  value={selectedTaluka?.name}
-                  isActive={true}
-                />
-              )}
-              
-              {selectedSchoolId && isAuthenticated && (
-                <SelectionBadge 
-                  label="School"
-                  value={selectedSchool?.name}
-                  isActive={true}
-                />
-              )}
-
-              {examName && (
-                <SelectionBadge 
-                  label="Exam"
-                  value={examName}
-                  isActive={true}
-                />
-              )}
-              
-              <button 
-                onClick={handleReset}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors ml-2"
-              >
-                Reset
-              </button>
-            </div>
-          )}
-
-          {/* Content card */}
-          <div className={cn(
-            "frosted-glass p-6 max-w-2xl mx-auto",
-            isAuthenticated ? "md:max-w-4xl" : ""
-          )}>
-            {/* Step 0: Role Selection */}
-            {!userRole && (
-              <RoleSelector onSelectRole={handleRoleSelect} />
-            )}
-            
-            {/* Authentication flows */}
-            {!isAuthenticated && userRole && (
-              <div className="space-y-8">
-                {/* Step 1: District Selection */}
-                <div className={cn("selection-step", selectedDistrictId ? "mb-8" : "")}>
-                  <DistrictSelector 
-                    onSelect={handleDistrictSelect} 
-                    selectedDistrictId={selectedDistrictId}
+        {!showSelectionUI ? (
+          <>
+            <Hero />
+            <Steps />
+          </>
+        ) : (
+          <Container className="py-8">
+            {/* Selection badges */}
+            {(selectedDistrictId || selectedTalukaId || selectedSchoolId) && (
+              <div className="flex flex-wrap gap-2 mb-8 justify-center animate-fade-in">
+                {userRole && (
+                  <SelectionBadge 
+                    label="Role"
+                    value={userRole === "teacher" ? "School Teacher" : "Education Officer"}
+                    isActive={true}
                   />
-                  
-                  {showDistrictReportButton && (
-                    <div className="mt-4 flex justify-center">
-                      <button
-                        onClick={handleGenerateDistrictReport}
-                        className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                      >
-                        Generate District Report
-                      </button>
-                    </div>
-                  )}
-                </div>
+                )}
                 
-                {/* Step 2: Taluka Selection */}
-                {mountTalukaSelector && selectedDistrictId && (
-                  <div className={cn("selection-step", selectedTalukaId ? "mb-8" : "")}>
-                    <TalukaSelector
-                      districtId={selectedDistrictId}
-                      onSelect={handleTalukaSelect}
-                      selectedTalukaId={selectedTalukaId}
+                {selectedDistrictId && (
+                  <SelectionBadge 
+                    label="District"
+                    value={selectedDistrict?.name}
+                    isActive={true}
+                  />
+                )}
+                
+                {selectedTalukaId && (
+                  <SelectionBadge 
+                    label="Taluka"
+                    value={selectedTaluka?.name}
+                    isActive={true}
+                  />
+                )}
+                
+                {selectedSchoolId && isAuthenticated && (
+                  <SelectionBadge 
+                    label="School"
+                    value={selectedSchool?.name}
+                    isActive={true}
+                  />
+                )}
+
+                {examName && (
+                  <SelectionBadge 
+                    label="Exam"
+                    value={examName}
+                    isActive={true}
+                  />
+                )}
+                
+                <button 
+                  onClick={handleReset}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors ml-2"
+                >
+                  Reset
+                </button>
+              </div>
+            )}
+
+            {/* Content card */}
+            <div className={cn(
+              "frosted-glass p-6 max-w-2xl mx-auto",
+              isAuthenticated ? "md:max-w-4xl" : ""
+            )}>
+              {/* Role Selection */}
+              {!userRole && (
+                <RoleSelector onSelectRole={handleRoleSelect} />
+              )}
+              
+              {/* Authentication flows */}
+              {!isAuthenticated && userRole && (
+                <div className="space-y-8">
+                  {/* Step 1: District Selection */}
+                  <div className={cn("selection-step", selectedDistrictId ? "mb-8" : "")}>
+                    <DistrictSelector 
+                      onSelect={handleDistrictSelect} 
+                      selectedDistrictId={selectedDistrictId}
                     />
                     
-                    {showTalukaReportButton && (
+                    {showDistrictReportButton && (
                       <div className="mt-4 flex justify-center">
                         <button
-                          onClick={handleGenerateTalukaReport}
+                          onClick={handleGenerateDistrictReport}
                           className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                         >
-                          Generate Taluka Report
+                          Generate District Report
                         </button>
                       </div>
                     )}
                   </div>
-                )}
-                
-                {/* Step 3: School List */}
-                {mountSchoolList && selectedTalukaId && (
-                  <div className="selection-step mt-8">
-                    <SchoolList
-                      talukaId={selectedTalukaId}
-                      onSelectSchool={handleSchoolSelect}
-                    />
-                  </div>
-                )}
-                
-                {/* Authentication Modals */}
-                <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
-                  <DialogContent className="sm:max-w-md">
-                    {userRole === "officer" && !currentAuthEntity ? (
-                      <>
-                        <DialogTitle className="sr-only">Officer Authentication</DialogTitle>
-                        <OfficerAuth onAuthenticate={handleOfficerAuthenticate} />
-                      </>
-                    ) : (
-                      <>
-                        <DialogTitle className="sr-only">Authentication Required</DialogTitle>
-                        <PinAuth
-                          entityType={currentAuthEntity}
-                          entityId={
-                            currentAuthEntity === "district" 
-                              ? selectedDistrictId 
-                              : currentAuthEntity === "taluka" 
-                                ? selectedTalukaId 
-                                : selectedSchoolId
-                          }
-                          onAuthenticate={handleAuthenticate}
-                          requireExamName={currentAuthEntity === "school"}
-                        />
-                      </>
-                    )}
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
-            
-            {/* Report View */}
-            {isAuthenticated && currentAuthEntity && (
-              <ReportView 
-                type={currentAuthEntity} 
-                name={
-                  currentAuthEntity === "district" 
-                    ? selectedDistrict?.name || "" 
-                    : currentAuthEntity === "taluka" 
-                      ? selectedTaluka?.name || "" 
-                      : selectedSchool?.name || ""
-                }
-                examName={examName}
-              />
-            )}
-          </div>
-        </Container>
+                  
+                  {/* Step 2: Taluka Selection */}
+                  {mountTalukaSelector && selectedDistrictId && (
+                    <div className={cn("selection-step", selectedTalukaId ? "mb-8" : "")}>
+                      <TalukaSelector
+                        districtId={selectedDistrictId}
+                        onSelect={handleTalukaSelect}
+                        selectedTalukaId={selectedTalukaId}
+                      />
+                      
+                      {showTalukaReportButton && (
+                        <div className="mt-4 flex justify-center">
+                          <button
+                            onClick={handleGenerateTalukaReport}
+                            className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                          >
+                            Generate Taluka Report
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Step 3: School List */}
+                  {mountSchoolList && selectedTalukaId && (
+                    <div className="selection-step mt-8">
+                      <SchoolList
+                        talukaId={selectedTalukaId}
+                        onSelectSchool={handleSchoolSelect}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Authentication Modals */}
+                  <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+                    <DialogContent className="sm:max-w-md">
+                      {userRole === "officer" && !currentAuthEntity ? (
+                        <>
+                          <DialogTitle className="sr-only">Officer Authentication</DialogTitle>
+                          <OfficerAuth onAuthenticate={handleOfficerAuthenticate} />
+                        </>
+                      ) : (
+                        <>
+                          <DialogTitle className="sr-only">Authentication Required</DialogTitle>
+                          <PinAuth
+                            entityType={currentAuthEntity}
+                            entityId={
+                              currentAuthEntity === "district" 
+                                ? selectedDistrictId 
+                                : currentAuthEntity === "taluka" 
+                                  ? selectedTalukaId 
+                                  : selectedSchoolId
+                            }
+                            onAuthenticate={handleAuthenticate}
+                            requireExamName={currentAuthEntity === "school"}
+                          />
+                        </>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
+              
+              {/* Report View */}
+              {isAuthenticated && currentAuthEntity && (
+                <ReportView 
+                  type={currentAuthEntity} 
+                  name={
+                    currentAuthEntity === "district" 
+                      ? selectedDistrict?.name || "" 
+                      : currentAuthEntity === "taluka" 
+                        ? selectedTaluka?.name || "" 
+                        : selectedSchool?.name || ""
+                  }
+                  examName={examName}
+                />
+              )}
+            </div>
+          </Container>
+        )}
       </main>
     </div>
   );
