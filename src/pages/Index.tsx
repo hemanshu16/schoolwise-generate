@@ -68,6 +68,11 @@ const Index = () => {
     setOfficerPermission(permission);
     setShowAuthModal(false);
     setIsOfficerAuthenticated(permission !== "none");
+    
+    // If authentication failed, reset to role selection
+    if (permission === "none") {
+      setUserRole(null);
+    }
   };
   
   const handleDistrictSelect = (districtId: string) => {
@@ -134,6 +139,14 @@ const Index = () => {
   // Handle going back to role selection
   const handleBackToRoleSelection = () => {
     handleReset();
+  };
+  
+  // Handle dialog close - reset to role selection if officer not authenticated yet
+  const handleDialogOpenChange = (open: boolean) => {
+    setShowAuthModal(open);
+    if (!open && userRole === "officer" && !isOfficerAuthenticated) {
+      setUserRole(null);
+    }
   };
 
   // Determine if report generation buttons should be shown
@@ -303,7 +316,7 @@ const Index = () => {
       </main>
       
       {/* Authentication Modals */}
-      <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+      <Dialog open={showAuthModal} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-md">
           {userRole === "officer" && !currentAuthEntity ? (
             <>
