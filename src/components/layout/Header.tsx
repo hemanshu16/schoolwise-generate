@@ -15,10 +15,10 @@ const Header = ({ className, showBackButton = false, onBack }: HeaderProps) => {
       <div className="flex items-center gap-3">
         {showBackButton && (
           <Button 
-            variant="ghost" 
+            variant="secondary" 
             size="sm" 
             onClick={onBack} 
-            className="mr-2"
+            className="mr-2 border border-gray-300"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
