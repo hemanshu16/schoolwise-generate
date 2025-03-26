@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import DistrictSelector from "@/components/selection/DistrictSelector";
@@ -14,6 +15,7 @@ import { useDelayedMount } from "@/utils/animations";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import RoleSelector from "@/components/selection/RoleSelector";
 import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   // User role state
@@ -140,10 +142,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header 
-        showBackButton={!!userRole} 
-        onBack={handleBackToRoleSelection} 
-      />
+      <Header />
       
       <main>
         <Container className="py-8">
@@ -155,6 +154,21 @@ const Index = () => {
             </div>
           ) : (
             <>
+              {/* Back button */}
+              {userRole && (
+                <div className="mb-6">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={handleBackToRoleSelection} 
+                    className="border border-gray-300"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Back to Role Selection
+                  </Button>
+                </div>
+              )}
+
               {/* Selection badges */}
               {(selectedDistrictId || selectedTalukaId || selectedSchoolId) && (
                 <div className="flex flex-wrap gap-2 mb-8 justify-center animate-fade-in">
