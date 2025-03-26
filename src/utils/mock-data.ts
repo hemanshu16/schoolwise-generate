@@ -5,7 +5,7 @@ export interface District {
   password: string;
 }
 
-export interface Taluka {
+export interface Taluk {
   id: string;
   name: string;
   districtId: string;
@@ -15,7 +15,7 @@ export interface Taluka {
 export interface School {
   id: string;
   name: string;
-  talukaId: string;
+  talukId: string;
   pin: string;
 }
 
@@ -43,7 +43,7 @@ export const districts: District[] = [
   { id: "d4", name: "West District", password: "3456" },
 ];
 
-export const talukas: Taluka[] = [
+export const taluks: Taluk[] = [
   { id: "t1", name: "Riverside", districtId: "d1", pin: "1111" },
   { id: "t2", name: "Hilltop", districtId: "d1", pin: "2222" },
   { id: "t3", name: "Meadowvale", districtId: "d2", pin: "3333" },
@@ -55,20 +55,20 @@ export const talukas: Taluka[] = [
 ];
 
 export const schools: School[] = [
-  { id: "s1", name: "Riverside Elementary", talukaId: "t1", pin: "1234" },
-  { id: "s2", name: "Riverside High", talukaId: "t1", pin: "2345" },
-  { id: "s3", name: "Hilltop Academy", talukaId: "t2", pin: "3456" },
-  { id: "s4", name: "Hilltop Primary", talukaId: "t2", pin: "4567" },
-  { id: "s5", name: "Meadowvale School", talukaId: "t3", pin: "5678" },
-  { id: "s6", name: "Brookside Institute", talukaId: "t4", pin: "6789" },
-  { id: "s7", name: "Lakewood Primary", talukaId: "t5", pin: "7890" },
-  { id: "s8", name: "Pineville Academy", talukaId: "t6", pin: "8901" },
-  { id: "s9", name: "Oakridge School", talukaId: "t7", pin: "9012" },
-  { id: "s10", name: "Cedar Heights High", talukaId: "t8", pin: "0123" },
+  { id: "s1", name: "Riverside Elementary", talukId: "t1", pin: "1234" },
+  { id: "s2", name: "Riverside High", talukId: "t1", pin: "2345" },
+  { id: "s3", name: "Hilltop Academy", talukId: "t2", pin: "3456" },
+  { id: "s4", name: "Hilltop Primary", talukId: "t2", pin: "4567" },
+  { id: "s5", name: "Meadowvale School", talukId: "t3", pin: "5678" },
+  { id: "s6", name: "Brookside Institute", talukId: "t4", pin: "6789" },
+  { id: "s7", name: "Lakewood Primary", talukId: "t5", pin: "7890" },
+  { id: "s8", name: "Pineville Academy", talukId: "t6", pin: "8901" },
+  { id: "s9", name: "Oakridge School", talukId: "t7", pin: "9012" },
+  { id: "s10", name: "Cedar Heights High", talukId: "t8", pin: "0123" },
 ];
 
 export const generateReportData = (
-  type: "district" | "taluka" | "school",
+  type: "district" | "taluk" | "school",
   name: string
 ): ReportData => {
   // Add safeguard against null/undefined values

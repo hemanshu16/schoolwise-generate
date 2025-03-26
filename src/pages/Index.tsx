@@ -4,12 +4,12 @@ import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import DistrictSelector from "@/components/selection/DistrictSelector";
-import TalukaSelector from "@/components/selection/TalukaSelector";
+import TalukSelector from "@/components/selection/TalukaSelector";
 import SchoolList from "@/components/selection/SchoolList";
 import SelectionBadge from "@/components/ui/SelectionBadge";
 import PinAuth from "@/components/auth/PinAuth";
 import ReportView from "@/components/reports/ReportView";
-import { districts, schools, talukas } from "@/utils/mock-data";
+import { districts, schools, taluks } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
 import { useDelayedMount } from "@/utils/animations";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -25,33 +25,33 @@ const Index = () => {
   
   // Selection state
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
-  const [selectedTalukaId, setSelectedTalukaId] = useState<string | null>(null);
+  const [selectedTalukId, setSelectedTalukId] = useState<string | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [examName, setExamName] = useState<string>("");
   
   // Authentication and view state
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentAuthEntity, setCurrentAuthEntity] = useState<"district" | "taluka" | "school" | null>(null);
+  const [currentAuthEntity, setCurrentAuthEntity] = useState<"district" | "taluk" | "school" | null>(null);
   
   // Helpers for entity names
   const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
-  const selectedTaluka = talukas.find(t => t.id === selectedTalukaId);
+  const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
   const selectedSchool = schools.find(s => s.id === selectedSchoolId);
   
   // Determine current selection step
-  const showTalukaSelector = !!selectedDistrictId;
-  const showSchoolList = !!selectedTalukaId;
+  const showTalukSelector = !!selectedDistrictId;
+  const showSchoolList = !!selectedTalukId;
   
   // Delayed mounting for UI elements - explicitly convert to boolean
-  const mountTalukaSelector = useDelayedMount(Boolean(showTalukaSelector));
+  const mountTalukSelector = useDelayedMount(Boolean(showTalukSelector));
   const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
   
   // Handlers
   const handleRoleSelect = (role: "teacher" | "officer") => {
     setUserRole(role);
     setSelectedDistrictId(null);
-    setSelectedTalukaId(null);
+    setSelectedTalukId(null);
     setSelectedSchoolId(null);
     setIsAuthenticated(false);
     setCurrentAuthEntity(null);
@@ -77,14 +77,14 @@ const Index = () => {
   
   const handleDistrictSelect = (districtId: string) => {
     setSelectedDistrictId(districtId);
-    setSelectedTalukaId(null);
+    setSelectedTalukId(null);
     setSelectedSchoolId(null);
     setIsAuthenticated(false);
     setCurrentAuthEntity(null);
   };
   
-  const handleTalukaSelect = (talukaId: string) => {
-    setSelectedTalukaId(talukaId);
+  const handleTalukSelect = (talukId: string) => {
+    setSelectedTalukId(talukId);
     setSelectedSchoolId(null);
     setIsAuthenticated(false);
     setCurrentAuthEntity(null);
@@ -105,13 +105,13 @@ const Index = () => {
     }
   };
   
-  const handleGenerateTalukaReport = () => {
+  const handleGenerateTalukReport = () => {
     if (isOfficerAuthenticated) {
       setIsAuthenticated(true);
-      setCurrentAuthEntity("taluka");
+      setCurrentAuthEntity("taluk");
     } else {
       setShowAuthModal(true);
-      setCurrentAuthEntity("taluka");
+      setCurrentAuthEntity("taluk");
     }
   };
   
@@ -127,7 +127,7 @@ const Index = () => {
     setUserRole(null);
     setOfficerPermission("none");
     setSelectedDistrictId(null);
-    setSelectedTalukaId(null);
+    setSelectedTalukId(null);
     setSelectedSchoolId(null);
     setShowAuthModal(false);
     setIsAuthenticated(false);
@@ -150,8 +150,8 @@ const Index = () => {
   };
 
   // Determine if report generation buttons should be shown
-  const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukaId;
-  const showTalukaReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluka") && selectedTalukaId;
+  const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukId;
+  const showTalukReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluk") && selectedTalukId;
 
   return (
     <div className="min-h-screen bg-white">
@@ -183,7 +183,7 @@ const Index = () => {
               )}
 
               {/* Selection badges */}
-              {(selectedDistrictId || selectedTalukaId || selectedSchoolId) && (
+              {(selectedDistrictId || selectedTalukId || selectedSchoolId) && (
                 <div className="flex flex-wrap gap-2 mb-8 justify-center animate-fade-in">
                   {userRole && (
                     <SelectionBadge 
@@ -201,10 +201,10 @@ const Index = () => {
                     />
                   )}
                   
-                  {selectedTalukaId && (
+                  {selectedTalukId && (
                     <SelectionBadge 
-                      label="Taluka"
-                      value={selectedTaluka?.name}
+                      label="Taluk"
+                      value={selectedTaluk?.name}
                       isActive={true}
                     />
                   )}
@@ -261,22 +261,22 @@ const Index = () => {
                       )}
                     </div>
                     
-                    {/* Step 2: Taluka Selection */}
-                    {mountTalukaSelector && selectedDistrictId && (
-                      <div className={cn("selection-step", selectedTalukaId ? "mb-8" : "")}>
-                        <TalukaSelector
+                    {/* Step 2: Taluk Selection */}
+                    {mountTalukSelector && selectedDistrictId && (
+                      <div className={cn("selection-step", selectedTalukId ? "mb-8" : "")}>
+                        <TalukSelector
                           districtId={selectedDistrictId}
-                          onSelect={handleTalukaSelect}
-                          selectedTalukaId={selectedTalukaId}
+                          onSelect={handleTalukSelect}
+                          selectedTalukId={selectedTalukId}
                         />
                         
-                        {showTalukaReportButton && (
+                        {showTalukReportButton && (
                           <div className="mt-4 flex justify-center">
                             <button
-                              onClick={handleGenerateTalukaReport}
+                              onClick={handleGenerateTalukReport}
                               className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                             >
-                              Generate Taluka Report
+                              Generate Taluk Report
                             </button>
                           </div>
                         )}
@@ -284,10 +284,10 @@ const Index = () => {
                     )}
                     
                     {/* Step 3: School List */}
-                    {mountSchoolList && selectedTalukaId && (
+                    {mountSchoolList && selectedTalukId && (
                       <div className="selection-step mt-8">
                         <SchoolList
-                          talukaId={selectedTalukaId}
+                          talukId={selectedTalukId}
                           onSelectSchool={handleSchoolSelect}
                         />
                       </div>
@@ -302,8 +302,8 @@ const Index = () => {
                     name={
                       currentAuthEntity === "district" 
                         ? selectedDistrict?.name || "" 
-                        : currentAuthEntity === "taluka" 
-                          ? selectedTaluka?.name || "" 
+                        : currentAuthEntity === "taluk" 
+                          ? selectedTaluk?.name || "" 
                           : selectedSchool?.name || ""
                     }
                     examName={examName}
@@ -331,8 +331,8 @@ const Index = () => {
                 entityId={
                   currentAuthEntity === "district" 
                     ? selectedDistrictId 
-                    : currentAuthEntity === "taluka" 
-                      ? selectedTalukaId 
+                    : currentAuthEntity === "taluk" 
+                      ? selectedTalukId 
                       : selectedSchoolId
                 }
                 onAuthenticate={handleAuthenticate}

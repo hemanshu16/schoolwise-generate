@@ -15,21 +15,21 @@ import {
 } from "@/components/ui/dialog";
 
 interface SchoolListProps {
-  talukaId: string;
+  talukId: string;
   onSelectSchool: (schoolId: string) => void;
   className?: string;
 }
 
-const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) => {
+const SchoolList = ({ talukId, onSelectSchool, className }: SchoolListProps) => {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [showSheetAuth, setShowSheetAuth] = useState(false);
   const [showReportAuth, setShowReportAuth] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const animation = useFadeAnimation(true);
 
-  // Filter schools by taluka and search term
+  // Filter schools by taluk and search term
   const filteredSchools = schools
-    .filter((school) => school.talukaId === talukaId)
+    .filter((school) => school.talukId === talukId)
     .filter((school) => 
       school.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -66,7 +66,7 @@ const SchoolList = ({ talukaId, onSelectSchool, className }: SchoolListProps) =>
     <div className={cn("w-full", animation, className)}>
       <div className="flex items-center justify-between mb-4">
         <div className="mb-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-          <School className="h-3.5 w-3.5" /> Schools in Selected Taluka
+          <School className="h-3.5 w-3.5" /> Schools in Selected Taluk
         </div>
         
         <div className="relative w-64">

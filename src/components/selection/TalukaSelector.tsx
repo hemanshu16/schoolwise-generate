@@ -1,45 +1,45 @@
 
 import { useEffect, useState } from "react";
-import { talukas } from "@/utils/mock-data";
+import { taluks } from "@/utils/mock-data";
 import { Check, ChevronDown, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFadeAnimation } from "@/utils/animations";
 
-interface TalukaSelectorProps {
+interface TalukSelectorProps {
   districtId: string;
-  onSelect: (talukaId: string) => void;
-  selectedTalukaId: string | null;
+  onSelect: (talukId: string) => void;
+  selectedTalukId: string | null;
   className?: string;
 }
 
-const TalukaSelector = ({ districtId, onSelect, selectedTalukaId, className }: TalukaSelectorProps) => {
+const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: TalukSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredTalukas, setFilteredTalukas] = useState(talukas.filter(t => t.districtId === districtId));
+  const [filteredTaluks, setFilteredTaluks] = useState(taluks.filter(t => t.districtId === districtId));
   const animation = useFadeAnimation(true);
 
   useEffect(() => {
-    setFilteredTalukas(
-      talukas
-        .filter((taluka) => taluka.districtId === districtId)
-        .filter((taluka) =>
-          taluka.name.toLowerCase().includes(searchTerm.toLowerCase())
+    setFilteredTaluks(
+      taluks
+        .filter((taluk) => taluk.districtId === districtId)
+        .filter((taluk) =>
+          taluk.name.toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
   }, [districtId, searchTerm]);
 
-  const handleSelect = (talukaId: string) => {
-    onSelect(talukaId);
+  const handleSelect = (talukId: string) => {
+    onSelect(talukId);
     setIsOpen(false);
     setSearchTerm("");
   };
 
-  const selectedTaluka = talukas.find((t) => t.id === selectedTalukaId);
+  const selectedTaluk = taluks.find((t) => t.id === selectedTalukId);
 
   return (
     <div className={cn("relative w-full max-w-sm mx-auto", animation, className)}>
       <div className="mb-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-        <Map className="h-3.5 w-3.5" /> Select Taluka
+        <Map className="h-3.5 w-3.5" /> Select Taluk
       </div>
       
       <button
@@ -48,17 +48,17 @@ const TalukaSelector = ({ districtId, onSelect, selectedTalukaId, className }: T
         className={cn(
           "flex items-center justify-between w-full px-4 py-3 text-left transition-all duration-200",
           "bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary/20",
-          selectedTaluka ? "text-foreground" : "text-muted-foreground"
+          selectedTaluk ? "text-foreground" : "text-muted-foreground"
         )}
       >
         <span className="flex items-center gap-2">
-          {selectedTaluka ? (
+          {selectedTaluk ? (
             <>
               <Map className="h-4 w-4 text-primary" />
-              {selectedTaluka.name}
+              {selectedTaluk.name}
             </>
           ) : (
-            "Select a taluka"
+            "Select a taluk"
           )}
         </span>
         <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen ? "transform rotate-180" : "")} />
@@ -69,7 +69,7 @@ const TalukaSelector = ({ districtId, onSelect, selectedTalukaId, className }: T
           <div className="p-2">
             <input
               type="text"
-              placeholder="Search talukas..."
+              placeholder="Search taluks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input-field w-full text-sm"
@@ -77,29 +77,29 @@ const TalukaSelector = ({ districtId, onSelect, selectedTalukaId, className }: T
             />
           </div>
           <ul className="max-h-60 overflow-auto py-1">
-            {filteredTalukas.map((taluka) => (
-              <li key={taluka.id}>
+            {filteredTaluks.map((taluk) => (
+              <li key={taluk.id}>
                 <button
                   type="button"
-                  onClick={() => handleSelect(taluka.id)}
+                  onClick={() => handleSelect(taluk.id)}
                   className={cn(
                     "flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-muted/50 transition-colors",
-                    selectedTalukaId === taluka.id && "bg-primary/5 font-medium"
+                    selectedTalukId === taluk.id && "bg-primary/5 font-medium"
                   )}
                 >
                   <Map className={cn(
                     "h-4 w-4",
-                    selectedTalukaId === taluka.id ? "text-primary" : "text-muted-foreground"
+                    selectedTalukId === taluk.id ? "text-primary" : "text-muted-foreground"
                   )} />
-                  <span>{taluka.name}</span>
-                  {selectedTalukaId === taluka.id && (
+                  <span>{taluk.name}</span>
+                  {selectedTalukId === taluk.id && (
                     <Check className="h-4 w-4 text-primary ml-auto" />
                   )}
                 </button>
               </li>
             ))}
-            {filteredTalukas.length === 0 && (
-              <li className="px-4 py-2.5 text-muted-foreground text-sm">No talukas found</li>
+            {filteredTaluks.length === 0 && (
+              <li className="px-4 py-2.5 text-muted-foreground text-sm">No taluks found</li>
             )}
           </ul>
         </div>
@@ -108,4 +108,4 @@ const TalukaSelector = ({ districtId, onSelect, selectedTalukaId, className }: T
   );
 };
 
-export default TalukaSelector;
+export default TalukSelector;

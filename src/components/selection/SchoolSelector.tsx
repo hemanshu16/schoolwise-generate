@@ -6,27 +6,27 @@ import { cn } from "@/lib/utils";
 import { useFadeAnimation } from "@/utils/animations";
 
 interface SchoolSelectorProps {
-  talukaId: string;
+  talukId: string;
   onSelect: (schoolId: string) => void;
   selectedSchoolId: string | null;
   className?: string;
 }
 
-const SchoolSelector = ({ talukaId, onSelect, selectedSchoolId, className }: SchoolSelectorProps) => {
+const SchoolSelector = ({ talukId, onSelect, selectedSchoolId, className }: SchoolSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredSchools, setFilteredSchools] = useState(schools.filter(s => s.talukaId === talukaId));
+  const [filteredSchools, setFilteredSchools] = useState(schools.filter(s => s.talukId === talukId));
   const animation = useFadeAnimation(true);
 
   useEffect(() => {
     setFilteredSchools(
       schools
-        .filter((school) => school.talukaId === talukaId)
+        .filter((school) => school.talukId === talukId)
         .filter((school) =>
           school.name.toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
-  }, [talukaId, searchTerm]);
+  }, [talukId, searchTerm]);
 
   const handleSelect = (schoolId: string) => {
     onSelect(schoolId);
