@@ -129,13 +129,21 @@ const Index = () => {
     setIsOfficerAuthenticated(false);
   };
 
+  // Handle going back to role selection
+  const handleBackToRoleSelection = () => {
+    handleReset();
+  };
+
   // Determine if report generation buttons should be shown
   const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukaId;
   const showTalukaReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluka") && selectedTalukaId;
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
+      <Header 
+        showBackButton={!!userRole} 
+        onBack={handleBackToRoleSelection} 
+      />
       
       <main>
         <Container className="py-8">
