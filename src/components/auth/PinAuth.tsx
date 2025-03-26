@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { AlertCircle, FileSpreadsheet, Key, LockKeyhole } from "lucide-react";
 import { useFadeAnimation } from "@/utils/animations";
 import { toast } from "sonner";
-import { districts, schools, talukas } from "@/utils/mock-data";
+import { districts, schools, taluks } from "@/utils/mock-data";
 
 interface PinAuthProps {
   entityType: "district" | "taluka" | "school";
@@ -42,7 +42,7 @@ const PinAuth = ({
       correctPin = district?.password || "";
       entityName = district?.name || "";
     } else if (entityType === "taluka" && entityId) {
-      const taluka = talukas.find((t) => t.id === entityId);
+      const taluka = taluks.find((t) => t.id === entityId);
       correctPin = taluka?.pin || "";
       entityName = taluka?.name || "";
     } else if (entityType === "school" && entityId) {
@@ -80,7 +80,7 @@ const PinAuth = ({
     if (entityType === "district" && entityId) {
       return districts.find((d) => d.id === entityId)?.name || "";
     } else if (entityType === "taluka" && entityId) {
-      return talukas.find((t) => t.id === entityId)?.name || "";
+      return taluks.find((t) => t.id === entityId)?.name || "";
     } else if (entityType === "school" && entityId) {
       return schools.find((s) => s.id === entityId)?.name || "";
     }
