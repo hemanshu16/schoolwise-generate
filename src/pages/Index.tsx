@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, AlertTriangle, FileDown } from "lucide-react";
+import { ArrowLeft, AlertTriangle, FileDown, FileText } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import DistrictSelector from "@/components/selection/DistrictSelector";
@@ -18,6 +18,7 @@ import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import ExamNameInput from "@/components/reports/ExamNameInput";
 
 const Index = () => {
   // User role state
@@ -35,6 +36,10 @@ const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAuthEntity, setCurrentAuthEntity] = useState<"district" | "taluk" | "school" | null>(null);
+  
+  // Exam name input modal state
+  const [showExamNameModal, setShowExamNameModal] = useState(false);
+  const [pendingReportType, setPendingReportType] = useState<"district" | "taluk" | null>(null);
   
   // Unfilled schools modal state
   const [showUnfilledSchoolsModal, setShowUnfilledSchoolsModal] = useState(false);
@@ -104,21 +109,30 @@ const Index = () => {
   
   const handleGenerateDistrictReport = () => {
     if (isOfficerAuthenticated) {
-      setShowAuthModal(true);
-      setCurrentAuthEntity("district");
-    } else {
-      setShowAuthModal(true);
-      setCurrentAuthEntity("district");
+      // Open exam name modal instead of auth modal
+      setPendingReportType("district");
+      setShowExamNameModal(true);
     }
   };
   
   const handleGenerateTalukReport = () => {
     if (isOfficerAuthenticated) {
-      setShowAuthModal(true);
-      setCurrentAuthEntity("taluk");
-    } else {
-      setShowAuthModal(true);
-      setCurrentAuthEntity("taluk");
+      // Open exam name modal instead of auth modal
+      setPendingReportType("taluk");
+      setShowExamNameModal(true);
+    }
+  };
+  
+  const handleExamNameSubmit = (providedExamName: string) => {
+    setExamName(providedExamName);
+    setShowExamNameModal(false);
+    
+    if (pendingReportType) {
+      setCurrentAuthEntity(pendingReportType);
+      setIsAuthenticated(true);
+      setPendingReportType(null);
+      
+      toast.success(`Generating ${pendingReportType} report for ${providedExamName}`);
     }
   };
   
@@ -134,28 +148,31 @@ const Index = () => {
     
     setIsDownloading(true);
     
-    // Simulate file download
+    // Simulate PDF generation and download
     setTimeout(() => {
-      // Create a dummy CSV data for the unfilled schools
+      // Instead of CSV, we simulate creating a PDF
       const selectedDistrictName = selectedDistrict?.name || "Unknown";
       const selectedTalukName = selectedTaluk?.name || "Unknown";
       const examNameFormatted = unfilledSchoolsExamName.replace(/\s+/g, "_");
       
-      // Create dummy CSV data with school names that haven't submitted exam marks
-      const csvContent = [
-        "School Name,District,Taluk,Phone,Status",
-        `"Govt High School Mahadevapura","${selectedDistrictName}","${selectedTalukName}","9845012345","Pending"`,
-        `"Govt Primary School Vignan Nagar","${selectedDistrictName}","${selectedTalukName}","8123456789","Pending"`,
-        `"St. Mary's School","${selectedDistrictName}","${selectedTalukName}","7890123456","Pending"`,
-        `"Model Public School","${selectedDistrictName}","${selectedTalukName}","9123456789","Pending"`,
-      ].join("\n");
+      // Create a dummy blob as if it's a PDF
+      const pdfContent = `Unfilled Schools Report
+District: ${selectedDistrictName}
+Taluk: ${selectedTalukName}
+Exam: ${unfilledSchoolsExamName}
+
+Schools with unfilled marks:
+1. Govt High School Mahadevapura
+2. Govt Primary School Vignan Nagar
+3. St. Mary's School
+4. Model Public School`;
       
-      // Create a Blob and download it
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+      // Create a Blob and download it with PDF mimetype
+      const blob = new Blob([pdfContent], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `unfilled_schools_${selectedTalukName}_${examNameFormatted}.csv`;
+      link.download = `unfilled_schools_${selectedTalukName}_${examNameFormatted}.pdf`;
       document.body.appendChild(link);
       link.click();
       
@@ -167,7 +184,7 @@ const Index = () => {
       setShowUnfilledSchoolsModal(false);
       setUnfilledSchoolsExamName("");
       
-      toast.success("Downloaded list of schools with unfilled exam marks", {
+      toast.success("Downloaded PDF list of schools with unfilled exam marks", {
         description: `${examNameFormatted} - ${selectedTalukName}, ${selectedDistrictName}`
       });
     }, 1500);
@@ -194,6 +211,8 @@ const Index = () => {
     setIsOfficerAuthenticated(false);
     setShowUnfilledSchoolsModal(false);
     setUnfilledSchoolsExamName("");
+    setShowExamNameModal(false);
+    setPendingReportType(null);
   };
 
   // Handle going back to role selection
@@ -404,10 +423,27 @@ const Index = () => {
                       : selectedSchoolId
                 }
                 onAuthenticate={handleAuthenticate}
-                requireExamName={currentAuthEntity === "school" || currentAuthEntity === "district" || currentAuthEntity === "taluk"}
+                requireExamName={currentAuthEntity === "school"}
               />
             </>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Exam Name Modal */}
+      <Dialog 
+        open={showExamNameModal} 
+        onOpenChange={setShowExamNameModal}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enter Exam Name</DialogTitle>
+            <DialogDescription>
+              Please provide the exam name for the {pendingReportType} report
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ExamNameInput onSubmit={handleExamNameSubmit} />
         </DialogContent>
       </Dialog>
 
@@ -420,7 +456,7 @@ const Index = () => {
           <DialogHeader>
             <DialogTitle>Download Unfilled Schools List</DialogTitle>
             <DialogDescription>
-              Enter the exam name to download a list of schools that have not submitted exam marks
+              Enter the exam name to download a PDF list of schools that have not submitted exam marks
             </DialogDescription>
           </DialogHeader>
           
@@ -451,8 +487,8 @@ const Index = () => {
               disabled={isDownloading || !unfilledSchoolsExamName.trim()}
               className="gap-1.5"
             >
-              <FileDown className="h-4 w-4" />
-              {isDownloading ? "Downloading..." : "Download CSV"}
+              <FileText className="h-4 w-4" />
+              {isDownloading ? "Generating PDF..." : "Download PDF"}
             </Button>
           </DialogFooter>
         </DialogContent>
