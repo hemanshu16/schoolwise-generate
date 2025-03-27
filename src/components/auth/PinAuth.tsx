@@ -101,9 +101,7 @@ const PinAuth = ({
           {authPurpose === "report" ? "Authentication Required" : "Enter DICE Code"}
         </h2>
         <p className="text-muted-foreground">
-          {authPurpose === "report" 
-            ? `Please enter the PIN for ${getEntityName()} ${entityType}`
-            : `Please enter the DICE code for ${getEntityName()} to access Google Sheet`
+          {`Please enter the DICE code for ${getEntityName()} to access Google Sheet`
           }
         </p>
       </div>
