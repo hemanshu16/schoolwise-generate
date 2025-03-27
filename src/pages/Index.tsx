@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import DistrictSelector from "@/components/selection/DistrictSelector";
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import RoleSelector from "@/components/selection/RoleSelector";
 import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Index = () => {
   // User role state
@@ -33,6 +34,7 @@ const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAuthEntity, setCurrentAuthEntity] = useState<"district" | "taluk" | "school" | null>(null);
+  const [showUnfilledSchools, setShowUnfilledSchools] = useState(false);
   
   // Helpers for entity names
   const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
@@ -97,7 +99,7 @@ const Index = () => {
   
   const handleGenerateDistrictReport = () => {
     if (isOfficerAuthenticated) {
-      setIsAuthenticated(true);
+      setShowAuthModal(true);
       setCurrentAuthEntity("district");
     } else {
       setShowAuthModal(true);
@@ -107,12 +109,20 @@ const Index = () => {
   
   const handleGenerateTalukReport = () => {
     if (isOfficerAuthenticated) {
-      setIsAuthenticated(true);
+      setShowAuthModal(true);
       setCurrentAuthEntity("taluk");
     } else {
       setShowAuthModal(true);
       setCurrentAuthEntity("taluk");
     }
+  };
+  
+  const handleShowUnfilledSchools = () => {
+    setShowUnfilledSchools(true);
+    // Mocking the unfilled schools functionality
+    toast.info("Showing schools with unfilled exam marks", {
+      description: "This is a mock feature. In a real application, this would filter schools that haven't submitted exam data."
+    });
   };
   
   const handleAuthenticate = (providedExamName?: string) => {
@@ -134,6 +144,7 @@ const Index = () => {
     setCurrentAuthEntity(null);
     setExamName("");
     setIsOfficerAuthenticated(false);
+    setShowUnfilledSchools(false);
   };
 
   // Handle going back to role selection
@@ -250,7 +261,7 @@ const Index = () => {
                       />
                       
                       {showDistrictReportButton && (
-                        <div className="mt-4 flex justify-center">
+                        <div className="mt-4 flex justify-center gap-2">
                           <button
                             onClick={handleGenerateDistrictReport}
                             className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
@@ -271,12 +282,20 @@ const Index = () => {
                         />
                         
                         {showTalukReportButton && (
-                          <div className="mt-4 flex justify-center">
+                          <div className="mt-4 flex justify-center gap-2 flex-wrap">
                             <button
                               onClick={handleGenerateTalukReport}
                               className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                             >
                               Generate Taluk Report
+                            </button>
+                            
+                            <button 
+                              onClick={handleShowUnfilledSchools}
+                              className="py-2 px-4 bg-amber-100 text-amber-800 border border-amber-300 rounded-md hover:bg-amber-200 transition-colors flex items-center gap-1.5"
+                            >
+                              <AlertTriangle className="h-4 w-4" />
+                              Schools with Unfilled Marks
                             </button>
                           </div>
                         )}
@@ -336,7 +355,7 @@ const Index = () => {
                       : selectedSchoolId
                 }
                 onAuthenticate={handleAuthenticate}
-                requireExamName={currentAuthEntity === "school"}
+                requireExamName={currentAuthEntity === "school" || currentAuthEntity === "district" || currentAuthEntity === "taluk"}
               />
             </>
           )}

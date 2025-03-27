@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { getStaggeredDelay } from "@/utils/animations";
 
 interface ReportViewProps {
-  type: "district" | "taluka" | "school";
+  type: "district" | "taluk" | "school";
   name: string;
   examName?: string;
   className?: string;

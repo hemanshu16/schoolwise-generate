@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { AlertCircle, FileSpreadsheet, Key, LockKeyhole } from "lucide-react";
@@ -7,7 +6,7 @@ import { toast } from "sonner";
 import { districts, schools, taluks } from "@/utils/mock-data";
 
 interface PinAuthProps {
-  entityType: "district" | "taluka" | "school";
+  entityType: "district" | "taluk" | "school";
   entityId: string | null;
   onAuthenticate: (providedExamName?: string) => void;
   authPurpose?: "report" | "sheet";
@@ -41,7 +40,7 @@ const PinAuth = ({
       const district = districts.find((d) => d.id === entityId);
       correctPin = district?.password || "";
       entityName = district?.name || "";
-    } else if (entityType === "taluka" && entityId) {
+    } else if (entityType === "taluk" && entityId) {
       const taluka = taluks.find((t) => t.id === entityId);
       correctPin = taluka?.pin || "";
       entityName = taluka?.name || "";
@@ -79,7 +78,7 @@ const PinAuth = ({
   const getEntityName = () => {
     if (entityType === "district" && entityId) {
       return districts.find((d) => d.id === entityId)?.name || "";
-    } else if (entityType === "taluka" && entityId) {
+    } else if (entityType === "taluk" && entityId) {
       return taluks.find((t) => t.id === entityId)?.name || "";
     } else if (entityType === "school" && entityId) {
       return schools.find((s) => s.id === entityId)?.name || "";
