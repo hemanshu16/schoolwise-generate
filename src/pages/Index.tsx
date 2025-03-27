@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ArrowLeft, AlertTriangle, FileDown, FileText } from "lucide-react";
 import Header from "@/components/layout/Header";
@@ -376,6 +375,7 @@ Schools with unfilled marks:
                         <SchoolList
                           talukId={selectedTalukId}
                           onSelectSchool={handleSchoolSelect}
+                          userRole={userRole}
                         />
                       </div>
                     )}

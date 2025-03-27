@@ -19,11 +19,13 @@ interface SchoolListProps {
   talukId: string;
   onSelectSchool: (schoolId: string) => void;
   className?: string;
+  userRole?: "teacher" | "officer";
 }
 
-const SchoolList = ({ talukId, onSelectSchool, className }: SchoolListProps) => {
+const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }: SchoolListProps) => {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [showReportAuth, setShowReportAuth] = useState(false);
+  const [showSheetAuth, setShowSheetAuth] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const animation = useFadeAnimation(true);
 
@@ -41,6 +43,20 @@ const SchoolList = ({ talukId, onSelectSchool, className }: SchoolListProps) => 
 
   const handleSheetClick = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
+    
+    // For school teachers, show auth dialog
+    if (userRole === "teacher") {
+      setShowSheetAuth(true);
+    } else {
+      // For officers, directly open the sheet
+      const school = schools.find(s => s.id === selectedSchoolId);
+      toast.success(`Opening Google Sheet for ${school?.name}`);
+      window.open("https://docs.google.com/spreadsheets/create", "_blank");
+    }
+  };
+
+  const handleSheetAuthenticated = () => {
+    setShowSheetAuth(false);
     
     // Get the school name for the toast message
     const school = schools.find(s => s.id === selectedSchoolId);
@@ -74,6 +90,19 @@ const SchoolList = ({ talukId, onSelectSchool, className }: SchoolListProps) => 
           />
         </div>
       </div>
+
+      {/* Sheet Access Authentication Modal */}
+      <Dialog open={showSheetAuth} onOpenChange={setShowSheetAuth}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle className="sr-only">Google Sheet Access</DialogTitle>
+          <PinAuth
+            entityType="school"
+            entityId={selectedSchoolId}
+            onAuthenticate={handleSheetAuthenticated}
+            authPurpose="sheet"
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Report Authentication Modal */}
       <Dialog open={showReportAuth} onOpenChange={setShowReportAuth}>
