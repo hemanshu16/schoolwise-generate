@@ -6,7 +6,7 @@ import { Lock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DialogTitle } from "@/components/ui/dialog";
 
-export type OfficerPermission = "district" | "taluka" | "none";
+export type OfficerPermission = "district" | "taluk" | "none";
 
 interface OfficerAuthProps {
   onAuthenticate: (permission: OfficerPermission) => void;
@@ -32,11 +32,11 @@ const OfficerAuth = ({ onAuthenticate }: OfficerAuthProps) => {
           password === "9012" || password === "3456") {
         toast.success("Authenticated as District Officer");
         onAuthenticate("district");
-      } else if (password === "taluka123" || password === "1111" || password === "2222" ||
+      } else if (password === "taluk123" || password === "1111" || password === "2222" ||
                 password === "3333" || password === "4444" || password === "5555" ||
                 password === "6666" || password === "7777" || password === "8888") {
-        toast.success("Authenticated as Taluka Officer");
-        onAuthenticate("taluka");
+        toast.success("Authenticated as Taluk Officer");
+        onAuthenticate("taluk");
       } else {
         setError("Invalid password. Please try again.");
         toast.error("Invalid password");
@@ -58,7 +58,7 @@ const OfficerAuth = ({ onAuthenticate }: OfficerAuthProps) => {
         </p>
         <div className="mt-2 text-xs text-muted-foreground">
           <p>District passwords: 1234, 5678, 9012, 3456</p>
-          <p>Taluka passwords: 1111, 2222, 3333, 4444, 5555, 6666, 7777, 8888</p>
+          <p>Taluk passwords: 1111, 2222, 3333, 4444, 5555, 6666, 7777, 8888</p>
         </div>
       </div>
 
