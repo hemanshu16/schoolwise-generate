@@ -13,6 +13,7 @@ import {
   DialogPortal,
   DialogTitle
 } from "@/components/ui/dialog";
+import ExamNameInput from "../reports/ExamNameInput";
 
 interface SchoolListProps {
   talukId: string;
@@ -22,7 +23,6 @@ interface SchoolListProps {
 
 const SchoolList = ({ talukId, onSelectSchool, className }: SchoolListProps) => {
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
-  const [showSheetAuth, setShowSheetAuth] = useState(false);
   const [showReportAuth, setShowReportAuth] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const animation = useFadeAnimation(true);
@@ -41,13 +41,8 @@ const SchoolList = ({ talukId, onSelectSchool, className }: SchoolListProps) => 
 
   const handleSheetClick = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setShowSheetAuth(true);
-  };
-
-  const handleSheetAuthenticated = () => {
-    setShowSheetAuth(false);
     
-    // Mock opening Google Sheet in a new tab
+    // Get the school name for the toast message
     const school = schools.find(s => s.id === selectedSchoolId);
     toast.success(`Opening Google Sheet for ${school?.name}`);
     
@@ -79,19 +74,6 @@ const SchoolList = ({ talukId, onSelectSchool, className }: SchoolListProps) => 
           />
         </div>
       </div>
-
-      {/* Sheet Access Authentication Modal */}
-      <Dialog open={showSheetAuth} onOpenChange={setShowSheetAuth}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle className="sr-only">School Sheet Authentication</DialogTitle>
-          <PinAuth
-            entityType="school"
-            entityId={selectedSchoolId}
-            onAuthenticate={handleSheetAuthenticated}
-            authPurpose="sheet"
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* Report Authentication Modal */}
       <Dialog open={showReportAuth} onOpenChange={setShowReportAuth}>

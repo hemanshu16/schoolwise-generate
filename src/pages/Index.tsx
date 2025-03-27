@@ -109,7 +109,7 @@ const Index = () => {
   
   const handleGenerateDistrictReport = () => {
     if (isOfficerAuthenticated) {
-      // Open exam name modal instead of auth modal
+      // Open exam name modal directly
       setPendingReportType("district");
       setShowExamNameModal(true);
     }
@@ -117,7 +117,7 @@ const Index = () => {
   
   const handleGenerateTalukReport = () => {
     if (isOfficerAuthenticated) {
-      // Open exam name modal instead of auth modal
+      // Open exam name modal directly
       setPendingReportType("taluk");
       setShowExamNameModal(true);
     }
@@ -150,12 +150,12 @@ const Index = () => {
     
     // Simulate PDF generation and download
     setTimeout(() => {
-      // Instead of CSV, we simulate creating a PDF
+      // Create a dummy blob as if it's a PDF
       const selectedDistrictName = selectedDistrict?.name || "Unknown";
       const selectedTalukName = selectedTaluk?.name || "Unknown";
       const examNameFormatted = unfilledSchoolsExamName.replace(/\s+/g, "_");
       
-      // Create a dummy blob as if it's a PDF
+      // Create PDF content
       const pdfContent = `Unfilled Schools Report
 District: ${selectedDistrictName}
 Taluk: ${selectedTalukName}
