@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, FileDown } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import DistrictSelector from "@/components/selection/DistrictSelector";
@@ -12,11 +12,12 @@ import ReportView from "@/components/reports/ReportView";
 import { districts, schools, taluks } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
 import { useDelayedMount } from "@/utils/animations";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import RoleSelector from "@/components/selection/RoleSelector";
 import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const Index = () => {
   // User role state
@@ -34,7 +35,11 @@ const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAuthEntity, setCurrentAuthEntity] = useState<"district" | "taluk" | "school" | null>(null);
-  const [showUnfilledSchools, setShowUnfilledSchools] = useState(false);
+  
+  // Unfilled schools modal state
+  const [showUnfilledSchoolsModal, setShowUnfilledSchoolsModal] = useState(false);
+  const [unfilledSchoolsExamName, setUnfilledSchoolsExamName] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
   
   // Helpers for entity names
   const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
@@ -118,11 +123,54 @@ const Index = () => {
   };
   
   const handleShowUnfilledSchools = () => {
-    setShowUnfilledSchools(true);
-    // Mocking the unfilled schools functionality
-    toast.info("Showing schools with unfilled exam marks", {
-      description: "This is a mock feature. In a real application, this would filter schools that haven't submitted exam data."
-    });
+    setShowUnfilledSchoolsModal(true);
+  };
+  
+  const handleDownloadUnfilledSchools = () => {
+    if (!unfilledSchoolsExamName.trim()) {
+      toast.error("Please enter an exam name");
+      return;
+    }
+    
+    setIsDownloading(true);
+    
+    // Simulate file download
+    setTimeout(() => {
+      // Create a dummy CSV data for the unfilled schools
+      const selectedDistrictName = selectedDistrict?.name || "Unknown";
+      const selectedTalukName = selectedTaluk?.name || "Unknown";
+      const examNameFormatted = unfilledSchoolsExamName.replace(/\s+/g, "_");
+      
+      // Create dummy CSV data with school names that haven't submitted exam marks
+      const csvContent = [
+        "School Name,District,Taluk,Phone,Status",
+        `"Govt High School Mahadevapura","${selectedDistrictName}","${selectedTalukName}","9845012345","Pending"`,
+        `"Govt Primary School Vignan Nagar","${selectedDistrictName}","${selectedTalukName}","8123456789","Pending"`,
+        `"St. Mary's School","${selectedDistrictName}","${selectedTalukName}","7890123456","Pending"`,
+        `"Model Public School","${selectedDistrictName}","${selectedTalukName}","9123456789","Pending"`,
+      ].join("\n");
+      
+      // Create a Blob and download it
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `unfilled_schools_${selectedTalukName}_${examNameFormatted}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setIsDownloading(false);
+      setShowUnfilledSchoolsModal(false);
+      setUnfilledSchoolsExamName("");
+      
+      toast.success("Downloaded list of schools with unfilled exam marks", {
+        description: `${examNameFormatted} - ${selectedTalukName}, ${selectedDistrictName}`
+      });
+    }, 1500);
   };
   
   const handleAuthenticate = (providedExamName?: string) => {
@@ -144,7 +192,8 @@ const Index = () => {
     setCurrentAuthEntity(null);
     setExamName("");
     setIsOfficerAuthenticated(false);
-    setShowUnfilledSchools(false);
+    setShowUnfilledSchoolsModal(false);
+    setUnfilledSchoolsExamName("");
   };
 
   // Handle going back to role selection
@@ -359,6 +408,53 @@ const Index = () => {
               />
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Unfilled Schools Modal */}
+      <Dialog 
+        open={showUnfilledSchoolsModal} 
+        onOpenChange={setShowUnfilledSchoolsModal}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Download Unfilled Schools List</DialogTitle>
+            <DialogDescription>
+              Enter the exam name to download a list of schools that have not submitted exam marks
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="examName" className="text-sm font-medium">
+                Exam Name
+              </label>
+              <Input
+                id="examName"
+                placeholder="e.g. Quarterly Exam 2023"
+                value={unfilledSchoolsExamName}
+                onChange={(e) => setUnfilledSchoolsExamName(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowUnfilledSchoolsModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDownloadUnfilledSchools}
+              disabled={isDownloading || !unfilledSchoolsExamName.trim()}
+              className="gap-1.5"
+            >
+              <FileDown className="h-4 w-4" />
+              {isDownloading ? "Downloading..." : "Download CSV"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
