@@ -38,7 +38,13 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
 
   const handleGenerateReport = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setShowReportAuth(true);
+    setShowReportAuth(userRole == "teacher");
+    if(userRole == "officer")
+    {
+      const school = schools.find(s => s.id === selectedSchoolId);
+      toast.success(`Opening Google Sheet for ${school?.name}`);
+      window.open("https://docs.google.com/spreadsheets/create", "_blank");
+    }
   };
 
   const handleSheetClick = (schoolId: string) => {

@@ -112,12 +112,12 @@ const PinAuth = ({
         <div>
           <label htmlFor="pin" className="block text-sm font-medium mb-2 flex items-center gap-1.5">
             <Key className="w-3.5 h-3.5" /> 
-            {authPurpose === "report" ? "Security PIN" : "DICE Code"}
+            { "DICE Code"}
           </label>
           <input
             id="pin"
             type="password"
-            placeholder={authPurpose === "report" ? "Enter PIN" : "Enter DICE code"}
+            placeholder={"Enter DICE code"}
             value={pin}
             onChange={(e) => {
               setPin(e.target.value);
