@@ -22,7 +22,7 @@ const Hero = ({ className }: HeroProps) => {
         <div className="max-w-2xl">
           <h1 className="text-5xl md:text-6xl font-bold text-secondary mb-4">Start Your Journey With Sitara Akka Today</h1>
           <p className="text-xl text-secondary/80 mb-8">Neevu 10th standard nalli iddre, here's all you need to know!</p>
-          <Button className="bg-amber-400 hover:bg-amber-500 text-secondary px-6 py-6 h-auto text-lg">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-6 h-auto text-lg">
             Join Sitara Champions Program
           </Button>
         </div>

@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 45 100% 50%;
+    --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -18,7 +18,7 @@
     --primary-foreground: 210 40% 98%;
 
     --secondary: 240 46% 20%;
-    --secondary-foreground: 45 100% 60%;
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
@@ -136,11 +136,11 @@
   }
   
   .step-divider {
-    @apply w-full h-1 bg-amber-400 mb-6;
+    @apply w-full h-1 bg-primary mb-6;
   }
   
   .site-hero {
-    @apply bg-amber-400 py-20 relative overflow-hidden;
+    @apply bg-gradient-to-br from-primary/20 to-primary/40 py-20 relative overflow-hidden;
   }
   
   .nav-link {
