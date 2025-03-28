@@ -5,6 +5,7 @@ import { AlertCircle, FileSpreadsheet, Key, LockKeyhole } from "lucide-react";
 import { useFadeAnimation } from "@/utils/animations";
 import { toast } from "sonner";
 import { districts, schools, taluks } from "@/utils/mock-data";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface PinAuthProps {
   entityType: "district" | "taluk" | "school";
@@ -15,13 +16,13 @@ interface PinAuthProps {
   className?: string;
 }
 
-const PinAuth = ({ 
-  entityType, 
-  entityId, 
-  onAuthenticate, 
+const PinAuth = ({
+  entityType,
+  entityId,
+  onAuthenticate,
   authPurpose = "report",
   requireExamName = false,
-  className 
+  className
 }: PinAuthProps) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -32,10 +33,10 @@ const PinAuth = ({
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
-    
+
     let correctPin = "";
     let entityName = "";
-    
+
     if (entityType === "district" && entityId) {
       const district = districts.find((d) => d.id === entityId);
       correctPin = district?.password || "";
@@ -49,15 +50,15 @@ const PinAuth = ({
       correctPin = school?.pin || "";
       entityName = school?.name || "";
     }
-    
+
     // Simulate an API call
     setTimeout(() => {
       if (pin === correctPin) {
-        const message = authPurpose === "report" 
+        const message = authPurpose === "report"
           ? `Successfully authenticated for ${entityName} report`
           : `Google Sheet access granted for ${entityName}`;
         toast.success(message);
-        
+
         onAuthenticate();
       } else {
         const errorMessage = authPurpose === "report"
@@ -69,7 +70,7 @@ const PinAuth = ({
       setIsSubmitting(false);
     }, 800);
   };
-  
+
   const getEntityName = () => {
     if (entityType === "district" && entityId) {
       return districts.find((d) => d.id === entityId)?.name || "";
@@ -80,6 +81,22 @@ const PinAuth = ({
     }
     return "";
   };
+
+  const [examName, setExamName] = useState('');
+
+  const examOptions = [
+    "Quarterly Assessment 2023",
+    "Half-Yearly Exam 2023",
+    "Annual Exam 2023",
+    "Unit Test 1",
+    "Unit Test 2",
+    "Unit Test 3",
+    "Unit Test 4",
+    "Model Exam 2023",
+    "Practice Test",
+    "Revision Test"
+  ];
+
 
   return (
     <div className={cn("w-full max-w-sm mx-auto", animation, className)}>
@@ -103,8 +120,8 @@ const PinAuth = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="pin" className="block text-sm font-medium mb-2 flex items-center gap-1.5">
-            <Key className="w-3.5 h-3.5" /> 
-            { "DICE Code"}
+            <Key className="w-3.5 h-3.5" />
+            {"DICE Code"}
           </label>
           <input
             id="pin"
@@ -128,7 +145,28 @@ const PinAuth = ({
             </div>
           )}
         </div>
-
+        {authPurpose == "report" &&
+          <div className="space-y-2">
+            <label htmlFor="examNameSelect" className="text-sm font-medium">
+              Exam Name
+            </label>
+            <Select
+              value={examName}
+              onValueChange={setExamName}
+            >
+              <SelectTrigger id="examNameSelect" className="w-full">
+                <SelectValue placeholder="Select an exam" />
+              </SelectTrigger>
+              <SelectContent>
+                {examOptions.map((exam) => (
+                  <SelectItem key={exam} value={exam}>
+                    {exam}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
         <button
           type="submit"
           disabled={!pin.trim() || isSubmitting}
@@ -139,8 +177,8 @@ const PinAuth = ({
             (isSubmitting || !pin.trim()) && "opacity-70 cursor-not-allowed"
           )}
         >
-          {isSubmitting 
-            ? (authPurpose === "report" ? "Authenticating..." : "Verifying...") 
+          {isSubmitting
+            ? (authPurpose === "report" ? "Authenticating..." : "Verifying...")
             : (authPurpose === "report" ? "Authenticate" : "Access Google Sheet")}
         </button>
       </form>
