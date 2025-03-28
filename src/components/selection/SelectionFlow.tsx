@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { districts, schools, taluks } from "@/utils/mock-data";
 import DistrictSelector from "@/components/selection/DistrictSelector";
@@ -30,7 +29,8 @@ const SelectionFlow = ({
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
   const [selectedTalukId, setSelectedTalukId] = useState<string | null>(null);
   const [showExamNameModal, setShowExamNameModal] = useState(false);
-  const [pendingReportType, setPendingReportType] = useState<"district" | "taluk" | null>(null);
+  // Update the type to include "school"
+  const [pendingReportType, setPendingReportType] = useState<"district" | "taluk" | "school" | null>(null);
   const [examName, setExamName] = useState<string>("");
   
   // Determine current selection step
@@ -78,13 +78,20 @@ const SelectionFlow = ({
     setShowExamNameModal(false);
     
     if (pendingReportType) {
-      const entityId = pendingReportType === "district" ? selectedDistrictId : selectedTalukId;
+      const entityId = pendingReportType === "district" 
+        ? selectedDistrictId 
+        : pendingReportType === "taluk" 
+          ? selectedTalukId 
+          : selectedSchoolId; // This is an issue as selectedSchoolId doesn't exist in this component
+      
       if (entityId) {
         onGenerateReport(pendingReportType, entityId, selectedExamName);
         
         const entityName = pendingReportType === "district" 
           ? selectedDistrict?.name 
-          : selectedTaluk?.name;
+          : pendingReportType === "taluk" 
+            ? selectedTaluk?.name 
+            : schools.find(s => s.id === entityId)?.name;
           
         toast.success(`Generating ${pendingReportType} report for ${entityName} - ${selectedExamName}`);
       }
@@ -92,7 +99,11 @@ const SelectionFlow = ({
     }
   };
   
+  // Fix the handleSchoolSelect function to store the schoolId for later use
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  
   const handleSchoolSelect = (schoolId: string) => {
+    setSelectedSchoolId(schoolId);
     const school = schools.find(s => s.id === schoolId);
     if (school) {
       setShowExamNameModal(true);
