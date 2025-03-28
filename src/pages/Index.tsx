@@ -1,23 +1,17 @@
-
 import { useState } from "react";
-import { ArrowLeft, AlertTriangle, FileDown, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
-import DistrictSelector from "@/components/selection/DistrictSelector";
-import TalukSelector from "@/components/selection/TalukaSelector";
-import SchoolList from "@/components/selection/SchoolList";
-import SelectionBadge from "@/components/ui/SelectionBadge";
-import PinAuth from "@/components/auth/PinAuth";
+import SelectionBadges from "@/components/selection/SelectionBadges";
 import ReportView from "@/components/reports/ReportView";
-import { districts, schools, taluks } from "@/utils/mock-data";
 import { cn } from "@/lib/utils";
-import { useDelayedMount } from "@/utils/animations";
-import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import RoleSelector from "@/components/selection/RoleSelector";
-import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
+import { OfficerPermission } from "@/components/auth/OfficerAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import ExamNameInput from "@/components/reports/ExamNameInput";
+import RoleSelectionView from "@/components/selection/RoleSelectionView";
+import SelectionFlow from "@/components/selection/SelectionFlow";
+import AuthenticationModals from "@/components/auth/AuthenticationModals";
+import { districts, taluks, schools } from "@/utils/mock-data";
 
 const Index = () => {
   // User role state
@@ -43,19 +37,6 @@ const Index = () => {
   // Unfilled schools modal state
   const [showUnfilledSchoolsModal, setShowUnfilledSchoolsModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  
-  // Helpers for entity names
-  const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
-  const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
-  const selectedSchool = schools.find(s => s.id === selectedSchoolId);
-  
-  // Determine current selection step
-  const showTalukSelector = !!selectedDistrictId;
-  const showSchoolList = !!selectedTalukId;
-  
-  // Delayed mounting for UI elements - explicitly convert to boolean
-  const mountTalukSelector = useDelayedMount(Boolean(showTalukSelector));
-  const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
   
   // Handlers
   const handleRoleSelect = (role: "teacher" | "officer") => {
@@ -85,82 +66,44 @@ const Index = () => {
     }
   };
   
-  const handleDistrictSelect = (districtId: string) => {
-    setSelectedDistrictId(districtId);
-    setSelectedTalukId(null);
-    setSelectedSchoolId(null);
-    setIsAuthenticated(false);
-    setCurrentAuthEntity(null);
-  };
-  
-  const handleTalukSelect = (talukId: string) => {
-    setSelectedTalukId(talukId);
-    setSelectedSchoolId(null);
-    setIsAuthenticated(false);
-    setCurrentAuthEntity(null);
-  };
-  
-  const handleSchoolSelect = (schoolId: string) => {
-    setSelectedSchoolId(schoolId);
-    // Now we need to prompt for exam name before showing the report
-    setShowExamNameModal(true);
-  };
-  
-  const handleGenerateDistrictReport = () => {
-    if (isOfficerAuthenticated) {
-      // Open exam name modal directly
-      setPendingReportType("district");
-      setShowExamNameModal(true);
-    }
-  };
-  
-  const handleGenerateTalukReport = () => {
-    if (isOfficerAuthenticated) {
-      // Open exam name modal directly
-      setPendingReportType("taluk");
-      setShowExamNameModal(true);
-    }
-  };
-  
-  const handleExamNameSubmit = (providedExamName: string) => {
-    setExamName(providedExamName);
-    setShowExamNameModal(false);
+  const handleGenerateReport = (type: "district" | "taluk" | "school", entityId: string, selectedExamName: string) => {
+    setCurrentAuthEntity(type);
+    setExamName(selectedExamName);
+    setIsAuthenticated(true);
     
-    if (pendingReportType) {
-      setCurrentAuthEntity(pendingReportType);
-      setIsAuthenticated(true);
-      setPendingReportType(null);
-      
-      toast.success(`Generating ${pendingReportType} report for ${providedExamName}`);
-    } else if (selectedSchoolId) {
-      // For school report
-      setCurrentAuthEntity("school");
-      setIsAuthenticated(true);
-      
-      toast.success(`Generating school report for ${selectedSchool?.name} - ${providedExamName}`);
+    if (type === "school") {
+      setSelectedSchoolId(entityId);
     }
   };
   
-  const handleShowUnfilledSchools = () => {
+  const handleShowUnfilledSchools = (selectedExamName: string) => {
+    setExamName(selectedExamName);
     setShowUnfilledSchoolsModal(true);
   };
   
-  const handleDownloadUnfilledSchools = () => {
-    // Start the download process with the selected exam name from the modal
+  const handleDownloadUnfilledSchools = (selectedExamName: string) => {
+    // Start the download process with the selected exam name
     setIsDownloading(true);
+    setExamName(selectedExamName);
     
     // Simulate PDF generation and download
     setTimeout(() => {
-      // Create a dummy blob as if it's a PDF
-      const selectedDistrictName = selectedDistrict?.name || "Unknown";
-      const selectedTalukName = selectedTaluk?.name || "Unknown";
-      const examNameFormatted = examName.replace(/\s+/g, "_");
+      // Get entity names for the toast message
+      const selectedDistrictName = selectedDistrictId 
+        ? districts.find(d => d.id === selectedDistrictId)?.name || "Unknown"
+        : "Unknown";
+        
+      const selectedTalukName = selectedTalukId
+        ? taluks.find(t => t.id === selectedTalukId)?.name || "Unknown"
+        : "Unknown";
+        
+      const examNameFormatted = selectedExamName.replace(/\s+/g, "_");
       
       // Create PDF content
       const pdfContent = `Unfilled Schools Report
 District: ${selectedDistrictName}
 Taluk: ${selectedTalukName}
-Exam: ${examName}
+Exam: ${selectedExamName}
 
 Schools with unfilled marks:
 1. Govt High School Mahadevapura
@@ -223,11 +166,7 @@ Schools with unfilled marks:
       setUserRole(null);
     }
   };
-
-  // Determine if report generation buttons should be shown
-  const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukId;
-  const showTalukReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluk") && selectedTalukId;
-
+  
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -236,10 +175,7 @@ Schools with unfilled marks:
         <Container className="py-8">
           {/* Role Selector is always shown first */}
           {!userRole ? (
-            <div className="flex flex-col items-center justify-center">
-              <h2 className="text-3xl font-semibold text-center mb-8">Select Your Role</h2>
-              <RoleSelector onSelectRole={handleRoleSelect} />
-            </div>
+            <RoleSelectionView onSelectRole={handleRoleSelect} />
           ) : (
             <>
               {/* Back button */}
@@ -258,56 +194,15 @@ Schools with unfilled marks:
               )}
 
               {/* Selection badges */}
-              {(selectedDistrictId || selectedTalukId || selectedSchoolId) && (
-                <div className="flex flex-wrap gap-2 mb-8 justify-center animate-fade-in">
-                  {userRole && (
-                    <SelectionBadge 
-                      label="Role"
-                      value={userRole === "teacher" ? "School Teacher" : "Education Officer"}
-                      isActive={true}
-                    />
-                  )}
-                  
-                  {selectedDistrictId && (
-                    <SelectionBadge 
-                      label="District"
-                      value={selectedDistrict?.name}
-                      isActive={true}
-                    />
-                  )}
-                  
-                  {selectedTalukId && (
-                    <SelectionBadge 
-                      label="Taluk"
-                      value={selectedTaluk?.name}
-                      isActive={true}
-                    />
-                  )}
-                  
-                  {selectedSchoolId && isAuthenticated && (
-                    <SelectionBadge 
-                      label="School"
-                      value={selectedSchool?.name}
-                      isActive={true}
-                    />
-                  )}
-
-                  {examName && (
-                    <SelectionBadge 
-                      label="Exam"
-                      value={examName}
-                      isActive={true}
-                    />
-                  )}
-                  
-                  <button 
-                    onClick={handleReset}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors ml-2"
-                  >
-                    Reset
-                  </button>
-                </div>
-              )}
+              <SelectionBadges 
+                userRole={userRole}
+                selectedDistrictId={selectedDistrictId}
+                selectedTalukId={selectedTalukId}
+                selectedSchoolId={selectedSchoolId}
+                examName={examName}
+                isAuthenticated={isAuthenticated}
+                onReset={handleReset}
+              />
 
               {/* Content area */}
               <div className={cn(
@@ -316,67 +211,13 @@ Schools with unfilled marks:
               )}>
                 {/* Authentication flows */}
                 {!isAuthenticated && userRole && (
-                  <div className="space-y-8">
-                    {/* Step 1: District Selection */}
-                    <div className={cn("selection-step", selectedDistrictId ? "mb-8" : "")}>
-                      <DistrictSelector 
-                        onSelect={handleDistrictSelect} 
-                        selectedDistrictId={selectedDistrictId}
-                      />
-                      
-                      {showDistrictReportButton && (
-                        <div className="mt-4 flex justify-center gap-2">
-                          <button
-                            onClick={handleGenerateDistrictReport}
-                            className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                          >
-                            Generate District Report
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Step 2: Taluk Selection */}
-                    {mountTalukSelector && selectedDistrictId && (
-                      <div className={cn("selection-step", selectedTalukId ? "mb-8" : "")}>
-                        <TalukSelector
-                          districtId={selectedDistrictId}
-                          onSelect={handleTalukSelect}
-                          selectedTalukId={selectedTalukId}
-                        />
-                        
-                        {showTalukReportButton && (
-                          <div className="mt-4 flex justify-center gap-2 flex-wrap">
-                            <button
-                              onClick={handleGenerateTalukReport}
-                              className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                            >
-                              Generate Taluk Report
-                            </button>
-                            
-                            <button 
-                              onClick={handleShowUnfilledSchools}
-                              className="py-2 px-4 bg-primary/10 text-primary border border-primary/30 rounded-md hover:bg-primary/20 transition-colors flex items-center gap-1.5"
-                            >
-                              <AlertTriangle className="h-4 w-4" />
-                              Schools with Unfilled Marks
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Step 3: School List */}
-                    {mountSchoolList && selectedTalukId && (
-                      <div className="selection-step mt-8">
-                        <SchoolList
-                          talukId={selectedTalukId}
-                          onSelectSchool={handleSchoolSelect}
-                          userRole={userRole}
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <SelectionFlow 
+                    userRole={userRole}
+                    officerPermission={officerPermission}
+                    isOfficerAuthenticated={isOfficerAuthenticated}
+                    onGenerateReport={handleGenerateReport}
+                    onShowUnfilledSchools={handleShowUnfilledSchools}
+                  />
                 )}
                 
                 {/* Report View */}
@@ -385,10 +226,10 @@ Schools with unfilled marks:
                     type={currentAuthEntity} 
                     name={
                       currentAuthEntity === "district" 
-                        ? selectedDistrict?.name || "" 
+                        ? districts.find(d => d.id === selectedDistrictId)?.name || "" 
                         : currentAuthEntity === "taluk" 
-                          ? selectedTaluk?.name || "" 
-                          : selectedSchool?.name || ""
+                          ? taluks.find(t => t.id === selectedTalukId)?.name || "" 
+                          : schools.find(s => s.id === selectedSchoolId)?.name || ""
                     }
                     examName={examName}
                   />
@@ -399,69 +240,40 @@ Schools with unfilled marks:
         </Container>
       </main>
       
-      {/* Authentication Modals */}
-      <Dialog open={showAuthModal} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          {userRole === "officer" && !currentAuthEntity ? (
-            <>
-              <DialogTitle className="sr-only">Officer Authentication</DialogTitle>
-              <OfficerAuth onAuthenticate={handleOfficerAuthenticate} />
-            </>
-          ) : (
-            <>
-              <DialogTitle className="sr-only">Authentication Required</DialogTitle>
-              <PinAuth
-                entityType={currentAuthEntity}
-                entityId={
-                  currentAuthEntity === "district" 
-                    ? selectedDistrictId 
-                    : currentAuthEntity === "taluk" 
-                      ? selectedTalukId 
-                      : selectedSchoolId
-                }
-                onAuthenticate={handleAuthenticate}
-              />
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Exam Name Modal */}
-      <Dialog 
-        open={showExamNameModal} 
-        onOpenChange={setShowExamNameModal}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Select Exam</DialogTitle>
-            <DialogDescription>
-              Please select an exam for the {pendingReportType || "school"} report
-            </DialogDescription>
-          </DialogHeader>
-          
-          <ExamNameInput onSubmit={handleExamNameSubmit} />
-        </DialogContent>
-      </Dialog>
-
-      {/* Unfilled Schools Modal */}
-      <Dialog 
-        open={showUnfilledSchoolsModal} 
-        onOpenChange={setShowUnfilledSchoolsModal}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Download Unfilled Schools List</DialogTitle>
-            <DialogDescription>
-              Select an exam to download a PDF list of schools that have not submitted exam marks
-            </DialogDescription>
-          </DialogHeader>
-          
-          <ExamNameInput onSubmit={(selectedExamName) => {
-            setExamName(selectedExamName);
-            handleDownloadUnfilledSchools();
-          }} />
-        </DialogContent>
-      </Dialog>
+      {/* Authentication and other modals */}
+      <AuthenticationModals 
+        showAuthModal={showAuthModal}
+        showExamNameModal={showExamNameModal}
+        showUnfilledSchoolsModal={showUnfilledSchoolsModal}
+        currentAuthEntity={currentAuthEntity}
+        entityId={
+          currentAuthEntity === "district" 
+            ? selectedDistrictId 
+            : currentAuthEntity === "taluk" 
+              ? selectedTalukId 
+              : selectedSchoolId
+        }
+        userRole={userRole}
+        pendingReportType={pendingReportType}
+        isDownloading={isDownloading}
+        onAuthDialogChange={handleDialogOpenChange}
+        onExamNameModalChange={setShowExamNameModal}
+        onUnfilledSchoolsModalChange={setShowUnfilledSchoolsModal}
+        onOfficerAuthenticate={handleOfficerAuthenticate}
+        onAuthenticate={handleAuthenticate}
+        onExamNameSubmit={(selectedExamName) => {
+          setExamName(selectedExamName);
+          handleGenerateReport(pendingReportType || "school", 
+            pendingReportType === "district" 
+              ? selectedDistrictId || "" 
+              : pendingReportType === "taluk" 
+                ? selectedTalukId || "" 
+                : selectedSchoolId || "",
+            selectedExamName
+          );
+        }}
+        onUnfilledSchoolsExamNameSubmit={handleDownloadUnfilledSchools}
+      />
     </div>
   );
 };
