@@ -25,7 +25,6 @@ const PinAuth = ({
 }: PinAuthProps) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
-  const [examName, setExamName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const animation = useFadeAnimation(true);
 
@@ -59,12 +58,7 @@ const PinAuth = ({
           : `Google Sheet access granted for ${entityName}`;
         toast.success(message);
         
-        // Pass the exam name to the onAuthenticate callback if required
-        if (requireExamName && examName.trim()) {
-          onAuthenticate(examName);
-        } else {
-          onAuthenticate();
-        }
+        onAuthenticate();
       } else {
         const errorMessage = authPurpose === "report"
           ? "Authentication failed. Please check your PIN and try again."
@@ -135,32 +129,14 @@ const PinAuth = ({
           )}
         </div>
 
-        {requireExamName && (
-          <div>
-            <label htmlFor="examName" className="block text-sm font-medium mb-2 flex items-center gap-1.5">
-              <FileSpreadsheet className="w-3.5 h-3.5" /> 
-              Exam Name
-            </label>
-            <input
-              id="examName"
-              type="text"
-              placeholder="Enter exam name"
-              value={examName}
-              onChange={(e) => setExamName(e.target.value)}
-              className="input-field w-full"
-              required={requireExamName}
-            />
-          </div>
-        )}
-
         <button
           type="submit"
-          disabled={!pin.trim() || isSubmitting || (requireExamName && !examName.trim())}
+          disabled={!pin.trim() || isSubmitting}
           className={cn(
             "w-full py-2.5 px-4 rounded-md bg-primary text-primary-foreground font-medium transition-all",
             "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-1",
             "hover:bg-primary/90 active:bg-primary/80",
-            (isSubmitting || !pin.trim() || (requireExamName && !examName.trim())) && "opacity-70 cursor-not-allowed"
+            (isSubmitting || !pin.trim()) && "opacity-70 cursor-not-allowed"
           )}
         >
           {isSubmitting 

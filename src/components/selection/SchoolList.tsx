@@ -26,6 +26,7 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [showReportAuth, setShowReportAuth] = useState(false);
   const [showSheetAuth, setShowSheetAuth] = useState(false);
+  const [showExamNameModal, setShowExamNameModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const animation = useFadeAnimation(true);
 
@@ -38,12 +39,12 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
 
   const handleGenerateReport = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setShowReportAuth(userRole == "teacher");
-    if(userRole == "officer")
-    {
-      const school = schools.find(s => s.id === selectedSchoolId);
-      toast.success(`Opening Google Sheet for ${school?.name}`);
-      window.open("https://docs.google.com/spreadsheets/create", "_blank");
+    
+    if (userRole === "teacher") {
+      setShowReportAuth(true);
+    } else {
+      // For officers, show exam name modal directly
+      setShowExamNameModal(true);
     }
   };
 
@@ -55,7 +56,7 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
       setShowSheetAuth(true);
     } else {
       // For officers, directly open the sheet
-      const school = schools.find(s => s.id === selectedSchoolId);
+      const school = schools.find(s => s.id === schoolId);
       toast.success(`Opening Google Sheet for ${school?.name}`);
       window.open("https://docs.google.com/spreadsheets/create", "_blank");
     }
@@ -75,6 +76,16 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
   const handleReportAuthenticated = () => {
     setShowReportAuth(false);
     if (selectedSchoolId) {
+      onSelectSchool(selectedSchoolId);
+    }
+  };
+  
+  const handleExamNameSubmit = (examName: string) => {
+    setShowExamNameModal(false);
+    
+    if (selectedSchoolId) {
+      const school = schools.find(s => s.id === selectedSchoolId);
+      toast.success(`Generating report for ${school?.name} - ${examName}`);
       onSelectSchool(selectedSchoolId);
     }
   };
@@ -119,8 +130,15 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
             entityId={selectedSchoolId}
             onAuthenticate={handleReportAuthenticated}
             authPurpose="report"
-            requireExamName={true}
           />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Exam Name Modal for Officer */}
+      <Dialog open={showExamNameModal} onOpenChange={setShowExamNameModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle>Select Exam</DialogTitle>
+          <ExamNameInput onSubmit={handleExamNameSubmit} />
         </DialogContent>
       </Dialog>
 

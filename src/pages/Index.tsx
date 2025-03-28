@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ArrowLeft, AlertTriangle, FileDown, FileText } from "lucide-react";
 import Header from "@/components/layout/Header";
@@ -16,7 +17,6 @@ import RoleSelector from "@/components/selection/RoleSelector";
 import OfficerAuth, { OfficerPermission } from "@/components/auth/OfficerAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import ExamNameInput from "@/components/reports/ExamNameInput";
 
 const Index = () => {
@@ -42,7 +42,6 @@ const Index = () => {
   
   // Unfilled schools modal state
   const [showUnfilledSchoolsModal, setShowUnfilledSchoolsModal] = useState(false);
-  const [unfilledSchoolsExamName, setUnfilledSchoolsExamName] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   
   // Helpers for entity names
@@ -103,7 +102,8 @@ const Index = () => {
   
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setIsAuthenticated(true);
+    // Now we need to prompt for exam name before showing the report
+    setShowExamNameModal(true);
   };
   
   const handleGenerateDistrictReport = () => {
@@ -132,6 +132,12 @@ const Index = () => {
       setPendingReportType(null);
       
       toast.success(`Generating ${pendingReportType} report for ${providedExamName}`);
+    } else if (selectedSchoolId) {
+      // For school report
+      setCurrentAuthEntity("school");
+      setIsAuthenticated(true);
+      
+      toast.success(`Generating school report for ${selectedSchool?.name} - ${providedExamName}`);
     }
   };
   
@@ -140,11 +146,7 @@ const Index = () => {
   };
   
   const handleDownloadUnfilledSchools = () => {
-    if (!unfilledSchoolsExamName.trim()) {
-      toast.error("Please enter an exam name");
-      return;
-    }
-    
+    // Start the download process with the selected exam name from the modal
     setIsDownloading(true);
     
     // Simulate PDF generation and download
@@ -152,13 +154,13 @@ const Index = () => {
       // Create a dummy blob as if it's a PDF
       const selectedDistrictName = selectedDistrict?.name || "Unknown";
       const selectedTalukName = selectedTaluk?.name || "Unknown";
-      const examNameFormatted = unfilledSchoolsExamName.replace(/\s+/g, "_");
+      const examNameFormatted = examName.replace(/\s+/g, "_");
       
       // Create PDF content
       const pdfContent = `Unfilled Schools Report
 District: ${selectedDistrictName}
 Taluk: ${selectedTalukName}
-Exam: ${unfilledSchoolsExamName}
+Exam: ${examName}
 
 Schools with unfilled marks:
 1. Govt High School Mahadevapura
@@ -181,7 +183,6 @@ Schools with unfilled marks:
       
       setIsDownloading(false);
       setShowUnfilledSchoolsModal(false);
-      setUnfilledSchoolsExamName("");
       
       toast.success("Downloaded PDF list of schools with unfilled exam marks", {
         description: `${examNameFormatted} - ${selectedTalukName}, ${selectedDistrictName}`
@@ -189,12 +190,9 @@ Schools with unfilled marks:
     }, 1500);
   };
   
-  const handleAuthenticate = (providedExamName?: string) => {
+  const handleAuthenticate = () => {
     setIsAuthenticated(true);
     setShowAuthModal(false);
-    if (providedExamName) {
-      setExamName(providedExamName);
-    }
   };
   
   const handleReset = () => {
@@ -209,7 +207,6 @@ Schools with unfilled marks:
     setExamName("");
     setIsOfficerAuthenticated(false);
     setShowUnfilledSchoolsModal(false);
-    setUnfilledSchoolsExamName("");
     setShowExamNameModal(false);
     setPendingReportType(null);
   };
@@ -359,7 +356,7 @@ Schools with unfilled marks:
                             
                             <button 
                               onClick={handleShowUnfilledSchools}
-                              className="py-2 px-4 bg-amber-100 text-amber-800 border border-amber-300 rounded-md hover:bg-amber-200 transition-colors flex items-center gap-1.5"
+                              className="py-2 px-4 bg-primary/10 text-primary border border-primary/30 rounded-md hover:bg-primary/20 transition-colors flex items-center gap-1.5"
                             >
                               <AlertTriangle className="h-4 w-4" />
                               Schools with Unfilled Marks
@@ -423,7 +420,6 @@ Schools with unfilled marks:
                       : selectedSchoolId
                 }
                 onAuthenticate={handleAuthenticate}
-                requireExamName={currentAuthEntity === "school"}
               />
             </>
           )}
@@ -437,9 +433,9 @@ Schools with unfilled marks:
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Enter Exam Name</DialogTitle>
+            <DialogTitle>Select Exam</DialogTitle>
             <DialogDescription>
-              Please provide the exam name for the {pendingReportType} report
+              Please select an exam for the {pendingReportType || "school"} report
             </DialogDescription>
           </DialogHeader>
           
@@ -456,41 +452,14 @@ Schools with unfilled marks:
           <DialogHeader>
             <DialogTitle>Download Unfilled Schools List</DialogTitle>
             <DialogDescription>
-              Enter the exam name to download a PDF list of schools that have not submitted exam marks
+              Select an exam to download a PDF list of schools that have not submitted exam marks
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="examName" className="text-sm font-medium">
-                Exam Name
-              </label>
-              <Input
-                id="examName"
-                placeholder="e.g. Quarterly Exam 2023"
-                value={unfilledSchoolsExamName}
-                onChange={(e) => setUnfilledSchoolsExamName(e.target.value)}
-                className="w-full"
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowUnfilledSchoolsModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleDownloadUnfilledSchools}
-              disabled={isDownloading || !unfilledSchoolsExamName.trim()}
-              className="gap-1.5"
-            >
-              <FileText className="h-4 w-4" />
-              {isDownloading ? "Generating PDF..." : "Download PDF"}
-            </Button>
-          </DialogFooter>
+          <ExamNameInput onSubmit={(selectedExamName) => {
+            setExamName(selectedExamName);
+            handleDownloadUnfilledSchools();
+          }} />
         </DialogContent>
       </Dialog>
     </div>
