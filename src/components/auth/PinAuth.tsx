@@ -15,6 +15,29 @@ interface PinAuthProps {
   className?: string;
 }
 
+
+export const examOptions = [
+  "FA-1",
+  "FA-2",
+  "SA-1",
+  "FA-3",
+  "FA-4",
+  "Preparatory 1",
+  "Preparatory 2",
+  "Preparatory 3",
+  "SA-2",
+  "Unit Test 1",
+  "Unit Test 2",
+  "Unit Test 3",
+  "Unit Test 4",
+  "Unit Test 5",
+  "Unit Test 6",
+  "Unit Test 7",
+  "Unit Test 8",
+  "Unit Test 9",
+  "Unit Test 10"
+];
+
 const PinAuth = ({
   entityType,
   entityId,
@@ -83,18 +106,6 @@ const PinAuth = ({
 
   const [examName, setExamName] = useState('');
 
-  const examOptions = [
-    "Quarterly Assessment 2023",
-    "Half-Yearly Exam 2023",
-    "Annual Exam 2023",
-    "Unit Test 1",
-    "Unit Test 2",
-    "Unit Test 3",
-    "Unit Test 4",
-    "Model Exam 2023",
-    "Practice Test",
-    "Revision Test"
-  ];
 
 
   return (

@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { examOptions } from '../auth/PinAuth';
 
 interface ExamNameInputProps {
   onSubmit: (examName: string) => void;
@@ -18,19 +19,6 @@ interface ExamNameInputProps {
 const ExamNameInput: React.FC<ExamNameInputProps> = ({ onSubmit }) => {
   const [examName, setExamName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const examOptions = [
-    "Quarterly Assessment 2023",
-    "Half-Yearly Exam 2023",
-    "Annual Exam 2023",
-    "Unit Test 1",
-    "Unit Test 2",
-    "Unit Test 3",
-    "Unit Test 4",
-    "Model Exam 2023",
-    "Practice Test",
-    "Revision Test"
-  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
