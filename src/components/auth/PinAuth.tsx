@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { AlertCircle, FileSpreadsheet, Key, LockKeyhole } from "lucide-react";
@@ -63,7 +62,7 @@ const PinAuth = ({
       } else {
         const errorMessage = authPurpose === "report"
           ? "Authentication failed. Please check your PIN and try again."
-          : "Google Sheet access denied. Invalid DICE code.";
+          : "Google Sheet access denied. Invalid DISE code.";
         setError("Incorrect PIN. Please try again.");
         toast.error(errorMessage);
       }
@@ -109,10 +108,10 @@ const PinAuth = ({
           )}
         </div>
         <h2 className="text-xl font-semibold mb-2">
-          {authPurpose === "report" ? "Authentication Required" : "Enter DICE Code"}
+          {authPurpose === "report" ? "Authentication Required" : "Enter DISE Code"}
         </h2>
         <p className="text-muted-foreground">
-          {`Please enter the DICE code for ${getEntityName()} to access Google Sheet`
+          {`Please enter the DISE code for ${getEntityName()} to access Google Sheet`
           }
         </p>
       </div>
@@ -121,12 +120,12 @@ const PinAuth = ({
         <div>
           <label htmlFor="pin" className="block text-sm font-medium mb-2 flex items-center gap-1.5">
             <Key className="w-3.5 h-3.5" />
-            {"DICE Code"}
+            {"DISE Code"}
           </label>
           <input
             id="pin"
             type="password"
-            placeholder={"Enter DICE code"}
+            placeholder={"Enter DISE code"}
             value={pin}
             onChange={(e) => {
               setPin(e.target.value);
