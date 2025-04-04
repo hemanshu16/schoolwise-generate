@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { examOptions } from '../auth/PinAuth';
+import { useSupabase } from '@/lib/context/SupabaseContext';
 
 interface ExamNameInputProps {
   onSubmit: (examName: string) => void;
@@ -19,6 +18,7 @@ interface ExamNameInputProps {
 const ExamNameInput: React.FC<ExamNameInputProps> = ({ onSubmit }) => {
   const [examName, setExamName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { examNames, loading, error } = useSupabase();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,25 +45,39 @@ const ExamNameInput: React.FC<ExamNameInputProps> = ({ onSubmit }) => {
           <Select 
             value={examName} 
             onValueChange={setExamName}
+            disabled={loading}
           >
             <SelectTrigger id="examNameSelect" className="w-full">
-              <SelectValue placeholder="Select an exam" />
+              <SelectValue placeholder={loading ? "Loading exams..." : "Select an exam"} />
             </SelectTrigger>
             <SelectContent>
-              {examOptions.map((exam) => (
-                <SelectItem key={exam} value={exam}>
-                  {exam}
-                </SelectItem>
-              ))}
+              {loading ? (
+                <SelectItem value="loading" disabled>Loading exams...</SelectItem>
+              ) : error ? (
+                <SelectItem value="error" disabled>Error loading exams</SelectItem>
+              ) : examNames.length > 0 ? (
+                examNames.map((exam) => (
+                  <SelectItem key={exam.id} value={exam.exam_name}>
+                    {exam.exam_name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-data" disabled>No exams found</SelectItem>
+              )}
             </SelectContent>
           </Select>
+          {error && (
+            <p className="text-sm text-red-500 mt-1">
+              Error: {error}
+            </p>
+          )}
         </div>
       </div>
       
       <DialogFooter>
         <Button
           type="submit"
-          disabled={isSubmitting || !examName.trim()}
+          disabled={isSubmitting || !examName.trim() || loading}
           className="gap-1.5"
         >
           <FileText className="h-4 w-4" />
