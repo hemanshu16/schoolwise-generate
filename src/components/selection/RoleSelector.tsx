@@ -12,7 +12,6 @@ const RoleSelector = ({ onSelectRole, className }: RoleSelectorProps) => {
 
   return (
     <div className={cn("w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto", animation, className)}>
-      <h2 className="text-xl font-semibold text-center mb-6">Select Your Role</h2>
       
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <button

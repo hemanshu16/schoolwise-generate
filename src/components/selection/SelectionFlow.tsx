@@ -56,7 +56,7 @@ const SelectionFlow = ({
   const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
   
   // Determine if report generation buttons should be shown
-  const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId && !selectedTalukId;
+  const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId;
   const showTalukReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluk") && selectedTalukId;
 
   // Handlers
@@ -140,73 +140,86 @@ const SelectionFlow = ({
 
   return (
     <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12 w-full max-w-full">
-      {/* Step 1: District Selection */}
-      <div className={cn(
-        "selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full"
-      )}>
-        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-5">
-          {getStepNumber(1)}
-          <h3 className="text-base sm:text-lg font-medium text-slate-800">District Selection</h3>
-        </div>
-        
-        <DistrictSelector 
-          onSelect={handleDistrictSelect} 
-          selectedDistrictId={selectedDistrictId}
-          className="w-full max-w-full sm:max-w-md mx-auto"
-        />
-        
-        {showDistrictReportButton && (
-          <div className="mt-4 sm:mt-5 md:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
-            <button
-              onClick={handleGenerateDistrictReport}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 sm:px-5 bg-primary text-white rounded-full hover:bg-primary/90 transition-all shadow-sm hover:shadow-md text-sm sm:text-base"
-            >
-              <FileText className="h-4 w-4" />
-              Generate District Report
-            </button>
-          </div>
-        )}
-      </div>
-      
-      {/* Step 2: Taluk Selection */}
-      {mountTalukSelector && selectedDistrictId && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12">
+        {/* Step 1: District Selection */}
         <div className={cn(
-          "selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full"
+          "selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full",
+          !selectedDistrictId && "md:col-span-2" // Make it span full width when no district is selected
         )}>
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-5">
-            {getStepNumber(2)}
-            <h3 className="text-base sm:text-lg font-medium text-slate-800">Taluk Selection</h3>
+            {getStepNumber(1)}
+            <h3 className="text-base sm:text-lg font-medium text-slate-800">District Selection</h3>
           </div>
           
-          <TalukSelector
-            districtId={selectedDistrictId}
-            onSelect={handleTalukSelect}
-            selectedTalukId={selectedTalukId}
-            className="w-full max-w-full sm:max-w-md mx-auto"
-          />
+          <div className={cn(
+            "w-full", 
+            !selectedDistrictId && "flex justify-center"
+          )}>
+            <DistrictSelector 
+              onSelect={handleDistrictSelect} 
+              selectedDistrictId={selectedDistrictId}
+              className={cn(
+                "w-full",
+                !selectedDistrictId && "max-w-md"
+              )}
+            />
+          </div>
           
-          {showTalukReportButton && (
+          {showDistrictReportButton && (
             <div className="mt-4 sm:mt-5 md:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
               <button
-                onClick={handleGenerateTalukReport}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 sm:px-5 bg-secondary text-white rounded-full hover:bg-secondary/90 transition-all shadow-sm hover:shadow-md text-sm sm:text-base"
+                onClick={handleGenerateDistrictReport}
+                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-primary text-white text-sm rounded-md hover:bg-primary/90 transition-all"
               >
-                <FileText className="h-4 w-4" />
-                Generate Taluk Report
-              </button>
-              
-              <button 
-                onClick={handleShowUnfilledSchools}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 sm:px-5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full hover:bg-amber-100 transition-all text-sm sm:text-base"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                Schools with Unfilled Marks
+                <FileText className="h-3.5 w-3.5" />
+                District Report
               </button>
             </div>
           )}
         </div>
-      )}
-      
+        
+        {/* Step 2: Taluk Selection - Only show when district is selected */}
+        {selectedDistrictId && mountTalukSelector ? (
+          <div className={cn(
+            "selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full"
+          )}>
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-5">
+              {getStepNumber(2)}
+              <h3 className="text-base sm:text-lg font-medium text-slate-800">Taluk Selection</h3>
+            </div>
+            
+            <TalukSelector
+              districtId={selectedDistrictId}
+              onSelect={handleTalukSelect}
+              selectedTalukId={selectedTalukId}
+              className="w-full"
+            />
+            
+            {showTalukReportButton && (
+              <div className="mt-4 sm:mt-5 md:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
+                <button
+                  onClick={handleGenerateTalukReport}
+                  className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-secondary text-white text-sm rounded-md hover:bg-secondary/90 transition-all"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Taluk Report
+                </button>
+                
+                <button 
+                  onClick={handleShowUnfilledSchools}
+                  className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-amber-50 text-amber-700 border border-amber-200 text-sm rounded-md hover:bg-amber-100 transition-all"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Unfilled Marks
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Add an empty div to maintain grid layout on desktop when taluk selector is not shown */
+          <div className="hidden md:block" />
+        )}
+      </div>
       {/* Step 3: School List */}
       {mountSchoolList && selectedTalukId && (
         <div className="selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full">
@@ -240,7 +253,11 @@ const SelectionFlow = ({
             </DialogDescription>
           </DialogHeader>
           
-          <ExamNameInput onSubmit={handleExamNameSubmit} />
+          <ExamNameInput 
+            isOpen={showExamNameModal}
+            onClose={() => setShowExamNameModal(false)}
+            onSubmit={handleExamNameSubmit} 
+          />
         </DialogContent>
       </Dialog>
     </div>

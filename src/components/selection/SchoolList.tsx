@@ -261,17 +261,21 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
                 <div className="divide-y divide-slate-100">
                   {filteredSchools.map((school) => (
                     <div key={school.id} className="p-4 hover:bg-slate-50 transition-colors">
-                      <div className="flex items-center mb-3">
+                      <div className="flex items-start mb-3">
                         <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full bg-primary/10 text-primary mr-3">
                           <SchoolIcon className="h-4 w-4" />
                         </div>
-                        <div className="text-sm font-medium text-slate-900">{school.school_name.split("_")[1]}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-slate-900 break-words">
+                            {school.school_name.split("_")[1]}
+                          </div>
+                        </div>
                       </div>
                       
-                      <div className="flex flex-col gap-2">
+                      <div className="flex gap-2 justify-start">
                         <button
                           onClick={() => handleSheetClick(school.id.toString())}
-                          className="inline-flex items-center justify-center gap-1.5 text-primary hover:text-primary/80 transition-colors bg-primary/5 px-3 py-1.5 rounded-full text-xs w-full"
+                          className="inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors bg-primary/5 px-2 py-1 rounded-full text-xs"
                         >
                           <FileSpreadsheet className="w-3.5 h-3.5" />
                           <span>View Sheet</span>
@@ -281,7 +285,7 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
                           onClick={() => handleGenerateReport(school.id.toString())}
                           disabled={isGeneratingReport}
                           className={cn(
-                            "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors w-full",
+                            "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors",
                             isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
                               ? "bg-slate-200 text-slate-500 cursor-not-allowed"
                               : "bg-primary text-white hover:bg-primary/90"
@@ -290,12 +294,12 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
                           {isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1] ? (
                             <>
                               <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
-                              <span>Generating...</span>
+                              <span>Loading...</span>
                             </>
                           ) : (
                             <>
                               <FileText className="h-3.5 w-3.5" />
-                              <span>Generate Report</span>
+                              <span>Report</span>
                             </>
                           )}
                         </button>
@@ -310,9 +314,9 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
             <table className="w-full table-fixed border-collapse bg-white hidden sm:table min-w-[650px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[40%]">School Name</th>
-                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[30%]">Google Sheet</th>
-                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[30%]">Actions</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[60%]">School Name</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[20%]">Google Sheet</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[20%]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -322,30 +326,32 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="px-4 md:px-6 py-3 md:py-4">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 flex items-center justify-center rounded-full bg-primary/10 text-primary mr-3">
                           <SchoolIcon className="h-4 w-4 md:h-5 md:w-5" />
                         </div>
-                        <div className="ml-3 md:ml-4 min-w-0">
-                          <div className="text-xs md:text-sm font-medium text-slate-900 truncate">{school.school_name.split("_")[1]}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs md:text-sm font-medium text-slate-900 break-words">
+                            {school.school_name.split("_")[1]}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 md:px-6 py-3 md:py-4">
+                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleSheetClick(school.id.toString())}
-                        className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors bg-primary/5 px-3 py-1.5 rounded-full text-xs md:text-sm"
+                        className="inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors bg-primary/5 px-2 py-1 rounded-full text-xs"
                       >
-                        <FileSpreadsheet className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                        <span>View Sheet</span>
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        <span>Access Sheet</span>
                       </button>
                     </td>
-                    <td className="px-4 md:px-6 py-3 md:py-4">
+                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleGenerateReport(school.id.toString())}
                         disabled={isGeneratingReport}
                         className={cn(
-                          "inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors",
+                          "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors",
                           isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
                             ? "bg-slate-200 text-slate-500 cursor-not-allowed"
                             : "bg-primary text-white hover:bg-primary/90"
@@ -353,13 +359,13 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
                       >
                         {isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1] ? (
                           <>
-                            <span className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white"></span>
-                            <span>Generating...</span>
+                            <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
+                            <span>Loading...</span>
                           </>
                         ) : (
                           <>
-                            <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                            <span>Generate Report</span>
+                            <FileText className="h-3.5 w-3.5" />
+                            <span>Report</span>
                           </>
                         )}
                       </button>

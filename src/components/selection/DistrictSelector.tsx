@@ -65,7 +65,7 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
           selectedDistrict ? "border-primary/20" : "border-gray-200",
           selectedDistrict ? "text-foreground" : "text-muted-foreground"
         )}
-      >
+      > 
         <span className="flex items-center gap-2">
           {selectedDistrict ? (
             <>
