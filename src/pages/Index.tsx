@@ -195,7 +195,7 @@ Schools with unfilled marks:
       <Header />
       
       <main>
-        <Container className="py-8">
+        <Container className="py-4 sm:py-6 md:py-8">
           {/* Role Selector is always shown first */}
           {!userRole ? (
             <RoleSelectionView onSelectRole={handleRoleSelect} />
@@ -203,14 +203,14 @@ Schools with unfilled marks:
             <>
               {/* Back button */}
               {userRole && (
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <Button 
                     variant="secondary" 
                     size="sm" 
                     onClick={handleBackToRoleSelection} 
-                    className="border border-gray-300"
+                    className="border border-gray-300 text-xs sm:text-sm h-8 sm:h-9"
                   >
-                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     Back to Role Selection
                   </Button>
                 </div>
@@ -229,7 +229,8 @@ Schools with unfilled marks:
 
               {/* Content area */}
               <div className={cn(
-                "rounded-lg p-6 max-w-2xl mx-auto border shadow-sm",
+                "rounded-lg p-3 sm:p-4 md:p-6 mx-auto border shadow-sm",
+                "mt-4 sm:mt-6",
                 isAuthenticated ? "md:max-w-4xl" : ""
               )}>
                 {/* Authentication flows */}

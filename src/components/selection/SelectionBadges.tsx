@@ -2,6 +2,8 @@ import { schools, taluks } from "@/utils/mock-data";
 import SelectionBadge from "@/components/ui/SelectionBadge";
 import { useSupabase } from "@/lib/context/SupabaseContext";
 import { useEffect } from "react";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SelectionBadgesProps {
   userRole: "teacher" | "officer" | null;
@@ -41,12 +43,13 @@ const SelectionBadges = ({
   }
 
   return (
-    <div className="flex flex-wrap gap-2 mb-8 justify-center animate-fade-in">
+    <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6 md:mb-8 justify-center animate-fade-in max-w-full overflow-x-auto py-1">
       {userRole && (
         <SelectionBadge 
           label="Role"
           value={userRole === "teacher" ? "School Teacher" : "Education Officer"}
           isActive={true}
+          className="text-xs sm:text-sm"
         />
       )}
       
@@ -55,6 +58,7 @@ const SelectionBadges = ({
           label="District"
           value={selectedDistrict?.district}
           isActive={true}
+          className="text-xs sm:text-sm"
         />
       )}
       
@@ -63,6 +67,7 @@ const SelectionBadges = ({
           label="Taluk"
           value={selectedTaluk?.name}
           isActive={true}
+          className="text-xs sm:text-sm"
         />
       )}
       
@@ -71,6 +76,7 @@ const SelectionBadges = ({
           label="School"
           value={selectedSchool?.name}
           isActive={true}
+          className="text-xs sm:text-sm"
         />
       )}
 
@@ -79,14 +85,20 @@ const SelectionBadges = ({
           label="Exam"
           value={examName}
           isActive={true}
+          className="text-xs sm:text-sm"
         />
       )}
       
       <button 
         onClick={onReset}
-        className="text-sm text-muted-foreground hover:text-primary transition-colors ml-2"
+        className={cn(
+          "flex items-center gap-1 px-2 py-1 rounded-full",
+          "text-xs sm:text-sm text-muted-foreground hover:text-primary hover:bg-gray-100", 
+          "transition-colors border border-gray-200"
+        )}
       >
-        Reset
+        <X className="h-3 w-3 sm:h-4 sm:w-4" />
+        <span>Reset</span>
       </button>
     </div>
   );

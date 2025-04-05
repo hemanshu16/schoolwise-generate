@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ExamNameInput from "@/components/reports/ExamNameInput";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, FileText, ChevronDown } from "lucide-react";
 import { useSupabase } from "@/lib/context/SupabaseContext";
 
 interface SelectionFlowProps {
@@ -129,21 +129,39 @@ const SelectionFlow = ({
     }
   };
 
+  // Helper function to get decorative step number
+  const getStepNumber = (step: number) => {
+    return (
+      <div className="hidden sm:flex flex-shrink-0 items-center justify-center h-8 w-8 md:h-9 md:w-9 rounded-full bg-primary/10 text-primary font-semibold text-sm md:text-base">
+        {step}
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12 w-full max-w-full">
       {/* Step 1: District Selection */}
-      <div className={cn("selection-step", selectedDistrictId ? "mb-8" : "")}>
+      <div className={cn(
+        "selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full"
+      )}>
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-5">
+          {getStepNumber(1)}
+          <h3 className="text-base sm:text-lg font-medium text-slate-800">District Selection</h3>
+        </div>
+        
         <DistrictSelector 
           onSelect={handleDistrictSelect} 
           selectedDistrictId={selectedDistrictId}
+          className="w-full max-w-full sm:max-w-md mx-auto"
         />
         
         {showDistrictReportButton && (
-          <div className="mt-4 flex justify-center gap-2">
+          <div className="mt-4 sm:mt-5 md:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
             <button
               onClick={handleGenerateDistrictReport}
-              className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 sm:px-5 bg-primary text-white rounded-full hover:bg-primary/90 transition-all shadow-sm hover:shadow-md text-sm sm:text-base"
             >
+              <FileText className="h-4 w-4" />
               Generate District Report
             </button>
           </div>
@@ -152,25 +170,34 @@ const SelectionFlow = ({
       
       {/* Step 2: Taluk Selection */}
       {mountTalukSelector && selectedDistrictId && (
-        <div className={cn("selection-step", selectedTalukId ? "mb-8" : "")}>
+        <div className={cn(
+          "selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full"
+        )}>
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-5">
+            {getStepNumber(2)}
+            <h3 className="text-base sm:text-lg font-medium text-slate-800">Taluk Selection</h3>
+          </div>
+          
           <TalukSelector
             districtId={selectedDistrictId}
             onSelect={handleTalukSelect}
             selectedTalukId={selectedTalukId}
+            className="w-full max-w-full sm:max-w-md mx-auto"
           />
           
           {showTalukReportButton && (
-            <div className="mt-4 flex justify-center gap-2 flex-wrap">
+            <div className="mt-4 sm:mt-5 md:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
               <button
                 onClick={handleGenerateTalukReport}
-                className="py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 sm:px-5 bg-secondary text-white rounded-full hover:bg-secondary/90 transition-all shadow-sm hover:shadow-md text-sm sm:text-base"
               >
+                <FileText className="h-4 w-4" />
                 Generate Taluk Report
               </button>
               
               <button 
                 onClick={handleShowUnfilledSchools}
-                className="py-2 px-4 bg-primary/10 text-primary border border-primary/30 rounded-md hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 sm:px-5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full hover:bg-amber-100 transition-all text-sm sm:text-base"
               >
                 <AlertTriangle className="h-4 w-4" />
                 Schools with Unfilled Marks
@@ -182,24 +209,33 @@ const SelectionFlow = ({
       
       {/* Step 3: School List */}
       {mountSchoolList && selectedTalukId && (
-        <div className="selection-step mt-8">
+        <div className="selection-step bg-white rounded-lg md:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-slate-100 w-full">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-5">
+            {getStepNumber(3)}
+            <h3 className="text-base sm:text-lg font-medium text-slate-800">School Selection</h3>
+          </div>
+          
           <SchoolList
             talukId={selectedTalukId}
             onSelectSchool={handleSchoolSelect}
             userRole={userRole}
+            className="w-full"
           />
         </div>
       )}
 
-      {/* Exam Name Modal */}
+      {/* Exam Name Modal - Redesigned */}
       <Dialog 
         open={showExamNameModal} 
         onOpenChange={setShowExamNameModal}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Select Exam</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="w-[95vw] max-w-md rounded-xl sm:rounded-2xl p-4 sm:p-6">
+          <DialogHeader className="space-y-2 sm:space-y-3">
+            <div className="mx-auto rounded-full bg-primary/10 p-2 sm:p-3 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-lg sm:text-xl">Select Exam</DialogTitle>
+            <DialogDescription className="text-sm sm:text-base">
               Please select an exam for the {pendingReportType || "school"} report
             </DialogDescription>
           </DialogHeader>

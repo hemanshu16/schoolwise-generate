@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSupabase, School } from "@/lib/context/SupabaseContext";
 import { cn } from "@/lib/utils";
 import { useFadeAnimation } from "@/utils/animations";
-import { FileSpreadsheet, School as SchoolIcon } from "lucide-react";
+import { FileSpreadsheet, School as SchoolIcon, Search, FileText } from "lucide-react";
 import PinAuth from "../auth/PinAuth";
 import { toast } from "sonner";
 import {
@@ -183,25 +183,29 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
 
   return (
     <div className={cn("w-full", animation, className)}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="mb-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-          <SchoolIcon className="h-3.5 w-3.5" /> Schools in Selected Taluk
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6 gap-3 md:gap-4">
+        <div className="bg-primary/10 text-primary rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
+          <SchoolIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> 
+          Schools in Selected Taluk
         </div>
         
-        <div className="relative w-64">
-          <input
-            type="text"
-            placeholder="Search schools..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field w-full text-sm"
-          />
+        <div className="relative w-full md:w-64">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search schools..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-field w-full text-xs sm:text-sm pl-8 sm:pl-10 py-2 sm:py-3 rounded-full border-primary/20 focus:border-primary focus:ring-primary/40 transition-all"
+            />
+            <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-primary/60 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          </div>
         </div>
       </div>
 
       {/* Sheet Access Authentication Modal */}
       <Dialog open={showSheetAuth} onOpenChange={setShowSheetAuth}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] max-w-md">
           <DialogTitle className="sr-only">Google Sheet Access</DialogTitle>
           <PinAuth
             entityType="school"
@@ -215,7 +219,7 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
 
       {/* Report Authentication Modal */}
       <Dialog open={showReportAuth} onOpenChange={setShowReportAuth}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] max-w-md">
           <DialogTitle className="sr-only">School Report Authentication</DialogTitle>
           <PinAuth
             entityType="school"
@@ -228,72 +232,153 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
       </Dialog>
       
       {/* Exam Name Modal */}
-      <Dialog open={showExamNameModal} onOpenChange={setShowExamNameModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Select Exam</DialogTitle>
-          <ExamNameInput onSubmit={handleExamNameSubmit} />
-        </DialogContent>
-      </Dialog>
+      <ExamNameInput 
+        isOpen={showExamNameModal}
+        onClose={() => setShowExamNameModal(false)}
+        onSubmit={handleExamNameSubmit}
+      />
 
-      <div className="overflow-x-auto">
+      <div className="overflow-hidden rounded-lg sm:rounded-xl shadow-lg border border-slate-100">
         {loading ? (
-          <div className="py-20 text-center text-muted-foreground">Loading schools...</div>
+          <div className="py-16 sm:py-20 text-center text-muted-foreground flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-primary mb-3 sm:mb-4"></div>
+            <span className="text-sm sm:text-base">Loading schools...</span>
+          </div>
         ) : error ? (
-          <div className="py-20 text-center text-red-500">Error loading schools: {error}</div>
+          <div className="py-16 sm:py-20 text-center text-red-500 text-sm sm:text-base">Error loading schools: {error}</div>
         ) : (
-          <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
-            <thead>
-              <tr className="bg-muted/30">
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">School Name</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Google Sheet</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSchools.map((school) => (
-                <tr 
-                  key={school.id} 
-                  className={cn(
-                    "border-t border-border/20 hover:bg-muted/20 transition-colors",
-                  )}
-                >
-                  <td className="px-4 py-3 font-medium">{school.school_name.split("_")[1]}</td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleSheetClick(school.id.toString())}
-                      className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors"
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      <span className="underline underline-offset-2">Access Google Sheet</span>
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleGenerateReport(school.id.toString())}
-                      disabled={isGeneratingReport}
-                      className={cn(
-                        "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                        isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
-                          ? "bg-muted text-muted-foreground cursor-not-allowed"
-                          : "bg-primary/10 text-primary hover:bg-primary/20"
-                      )}
-                    >
-                      {isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
-                        ? "Generating..."
-                        : "Generate Report"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredSchools.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
-                    No schools found
-                  </td>
-                </tr>
+          <div className="overflow-x-auto">
+            {/* Mobile view for smaller screens */}
+            <div className="sm:hidden">
+              {filteredSchools.length === 0 ? (
+                <div className="py-10 text-center text-slate-500">
+                  <div className="flex flex-col items-center justify-center">
+                    <SchoolIcon className="h-8 w-8 text-slate-300 mb-2" />
+                    <p className="text-sm">No schools found</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {filteredSchools.map((school) => (
+                    <div key={school.id} className="p-4 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center mb-3">
+                        <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full bg-primary/10 text-primary mr-3">
+                          <SchoolIcon className="h-4 w-4" />
+                        </div>
+                        <div className="text-sm font-medium text-slate-900">{school.school_name.split("_")[1]}</div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleSheetClick(school.id.toString())}
+                          className="inline-flex items-center justify-center gap-1.5 text-primary hover:text-primary/80 transition-colors bg-primary/5 px-3 py-1.5 rounded-full text-xs w-full"
+                        >
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                          <span>View Sheet</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleGenerateReport(school.id.toString())}
+                          disabled={isGeneratingReport}
+                          className={cn(
+                            "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors w-full",
+                            isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
+                              ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                              : "bg-primary text-white hover:bg-primary/90"
+                          )}
+                        >
+                          {isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1] ? (
+                            <>
+                              <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
+                              <span>Generating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="h-3.5 w-3.5" />
+                              <span>Generate Report</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
+            
+            {/* Table view for larger screens */}
+            <table className="w-full table-fixed border-collapse bg-white hidden sm:table min-w-[650px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[40%]">School Name</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[30%]">Google Sheet</th>
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[30%]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredSchools.map((school) => (
+                  <tr 
+                    key={school.id} 
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <SchoolIcon className="h-4 w-4 md:h-5 md:w-5" />
+                        </div>
+                        <div className="ml-3 md:ml-4 min-w-0">
+                          <div className="text-xs md:text-sm font-medium text-slate-900 truncate">{school.school_name.split("_")[1]}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <button
+                        onClick={() => handleSheetClick(school.id.toString())}
+                        className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors bg-primary/5 px-3 py-1.5 rounded-full text-xs md:text-sm"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        <span>View Sheet</span>
+                      </button>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <button
+                        onClick={() => handleGenerateReport(school.id.toString())}
+                        disabled={isGeneratingReport}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors",
+                          isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
+                            ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                            : "bg-primary text-white hover:bg-primary/90"
+                        )}
+                      >
+                        {isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1] ? (
+                          <>
+                            <span className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white"></span>
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            <span>Generate Report</span>
+                          </>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredSchools.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 md:px-6 py-8 md:py-10 text-center text-slate-500">
+                      <div className="flex flex-col items-center justify-center">
+                        <SchoolIcon className="h-8 w-8 md:h-10 md:w-10 text-slate-300 mb-2 md:mb-3" />
+                        <p className="text-xs md:text-sm">No schools found</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
