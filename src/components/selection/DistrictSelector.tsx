@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from "react";
-import { districts } from "@/utils/mock-data";
 import { Check, ChevronDown, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFadeAnimation } from "@/utils/animations";
+import { useSupabase } from "@/lib/context/SupabaseContext";
 
 interface DistrictSelectorProps {
   onSelect: (districtId: string) => void;
@@ -12,18 +11,26 @@ interface DistrictSelectorProps {
 }
 
 const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictSelectorProps) => {
+  const { districts, refreshDistricts, loading } = useSupabase();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredDistricts, setFilteredDistricts] = useState(districts);
+  const [filteredDistricts, setFilteredDistricts] = useState<Array<any>>([]);
   const animation = useFadeAnimation(true);
+
+  // Refresh districts if not available
+  useEffect(() => {
+    if (districts.length === 0 && !loading) {
+      refreshDistricts();
+    }
+  }, [districts, refreshDistricts, loading]);
 
   useEffect(() => {
     setFilteredDistricts(
       districts.filter((district) =>
-        district.name.toLowerCase().includes(searchTerm.toLowerCase())
+        district.district.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [searchTerm]);
+  }, [searchTerm, districts]);
 
   const handleSelect = (districtId: string) => {
     onSelect(districtId);
@@ -31,10 +38,16 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
     setSearchTerm("");
   };
 
-  const selectedDistrict = districts.find((d) => d.id === selectedDistrictId);
+  const selectedDistrict = districts.find((d) => d.id.toString() === selectedDistrictId);
 
   return (
-    <div className={cn("relative w-full max-w-sm mx-auto", animation, className)}>
+    <div className={cn(
+      "relative w-full max-w-sm mx-auto", 
+      animation, 
+      className,
+      // Apply a higher z-index when the dropdown is open to ensure it stays on top
+      isOpen ? "z-50" : "z-10"
+    )}>
       <div className="mb-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
         <MapPin className="h-3.5 w-3.5" /> Select District
       </div>
@@ -52,7 +65,7 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
           {selectedDistrict ? (
             <>
               <MapPin className="h-4 w-4 text-primary" />
-              {selectedDistrict.name}
+              {selectedDistrict.district}
             </>
           ) : (
             "Select a district"
@@ -78,18 +91,18 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
               <li key={district.id}>
                 <button
                   type="button"
-                  onClick={() => handleSelect(district.id)}
+                  onClick={() => handleSelect(district.id.toString())}
                   className={cn(
                     "flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-muted/50 transition-colors",
-                    selectedDistrictId === district.id && "bg-primary/5 font-medium"
+                    selectedDistrictId === district.id.toString() && "bg-primary/5 font-medium"
                   )}
                 >
                   <MapPin className={cn(
                     "h-4 w-4",
-                    selectedDistrictId === district.id ? "text-primary" : "text-muted-foreground"
+                    selectedDistrictId === district.id.toString() ? "text-primary" : "text-muted-foreground"
                   )} />
-                  <span>{district.name}</span>
-                  {selectedDistrictId === district.id && (
+                  <span>{district.district}</span>
+                  {selectedDistrictId === district.id.toString() && (
                     <Check className="h-4 w-4 text-primary ml-auto" />
                   )}
                 </button>

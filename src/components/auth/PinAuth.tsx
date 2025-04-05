@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { AlertCircle, FileSpreadsheet, Key, LockKeyhole } from "lucide-react";
 import { useFadeAnimation } from "@/utils/animations";
 import { toast } from "sonner";
-import { districts, schools, taluks } from "@/utils/mock-data";
+import { schools, taluks } from "@/utils/mock-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useSupabase } from '@/lib/context/SupabaseContext';
 
@@ -15,6 +15,7 @@ interface PinAuthProps {
   authPurpose?: "report" | "sheet";
   requireExamName?: boolean;
   className?: string;
+  correctPin?: string;
 }
 
 interface AuthHeaderProps {
@@ -45,34 +46,21 @@ interface SubmitButtonProps {
   isDisabled: boolean;
 }
 
-// We'll keep this for backward compatibility but it won't be used
-export const examOptions = [
-  "FA-1",
-  "FA-2",
-  "SA-1",
-  "FA-3",
-  "FA-4",
-  "Preparatory 1",
-  "Preparatory 2",
-  "Preparatory 3",
-  "SA-2",
-  "Unit Test 1",
-  "Unit Test 2",
-  "Unit Test 3",
-  "Unit Test 4",
-  "Unit Test 5",
-  "Unit Test 6",
-  "Unit Test 7",
-  "Unit Test 8",
-  "Unit Test 9",
-  "Unit Test 10"
-];
 
 // Hook to handle entity-related operations
 const useEntityDetails = (entityType: "district" | "taluk" | "school", entityId: string | null) => {
+  const { districts, refreshDistricts, loading } = useSupabase();
+  
+  // Refresh districts if needed
+  useEffect(() => {
+    if (districts.length === 0 && !loading) {
+      refreshDistricts();
+    }
+  }, [districts, refreshDistricts, loading]);
+  
   const getEntityName = () => {
     if (entityType === "district" && entityId) {
-      return districts.find((d) => d.id === entityId)?.name || "";
+      return districts.find((d) => d.id.toString() === entityId)?.district || "";
     } else if (entityType === "taluk" && entityId) {
       return taluks.find((t) => t.id === entityId)?.name || "";
     } else if (entityType === "school" && entityId) {
@@ -83,7 +71,9 @@ const useEntityDetails = (entityType: "district" | "taluk" | "school", entityId:
 
   const getEntityPin = () => {
     if (entityType === "district" && entityId) {
-      return districts.find((d) => d.id === entityId)?.password || "";
+      // Note: Since we're migrating from mock data to Supabase, you'll need to add a 'password' field 
+      // to your district table in Supabase. For now, we'll use a placeholder.
+      return "1234"; // Placeholder PIN - in production this should come from Supabase
     } else if (entityType === "taluk" && entityId) {
       return taluks.find((t) => t.id === entityId)?.pin || "";
     } else if (entityType === "school" && entityId) {
@@ -204,7 +194,8 @@ const PinAuth = ({
   onAuthenticate,
   authPurpose = "report",
   requireExamName = false,
-  className
+  className,
+  correctPin
 }: PinAuthProps) => {
   const [pin, setPin] = useState("");
   const [examName, setExamName] = useState("");
@@ -212,7 +203,8 @@ const PinAuth = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const animation = useFadeAnimation(true);
   const { examNames, loading: loadingExams } = useSupabase();
-  const { entityName, correctPin } = useEntityDetails(entityType, entityId);
+  const { entityName } = useEntityDetails(entityType, entityId);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,6 +213,8 @@ const PinAuth = ({
 
     // Simulate an API call
     setTimeout(() => {
+      console.log(correctPin);
+      console.log(pin);
       if (pin === correctPin) {
         const message = authPurpose === "report"
           ? `Successfully authenticated for ${entityName} report`

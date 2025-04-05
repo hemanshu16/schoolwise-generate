@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from "react";
-import { taluks } from "@/utils/mock-data";
+import { useSupabase } from "@/lib/context/SupabaseContext";
 import { Check, ChevronDown, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFadeAnimation } from "@/utils/animations";
+import { Taluk } from "@/lib/context/SupabaseContext";
 
 interface TalukSelectorProps {
   districtId: string;
@@ -15,18 +15,26 @@ interface TalukSelectorProps {
 const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: TalukSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredTaluks, setFilteredTaluks] = useState(taluks.filter(t => t.districtId === districtId));
+  const [filteredTaluks, setFilteredTaluks] = useState<Taluk[]>([]);
   const animation = useFadeAnimation(true);
+  const { taluks, getTaluksByDistrict } = useSupabase();
+
+  useEffect(() => {
+    if (districtId) {
+      getTaluksByDistrict(Number(districtId));
+    }
+  }, [districtId]);
 
   useEffect(() => {
     setFilteredTaluks(
       taluks
-        .filter((taluk) => taluk.districtId === districtId)
-        .filter((taluk) =>
-          taluk.name.toLowerCase().includes(searchTerm.toLowerCase())
+        .filter((taluk) => 
+          searchTerm ? 
+          taluk.taluk.toLowerCase().includes(searchTerm.toLowerCase()) : 
+          true
         )
     );
-  }, [districtId, searchTerm]);
+  }, [taluks, searchTerm]);
 
   const handleSelect = (talukId: string) => {
     onSelect(talukId);
@@ -34,10 +42,16 @@ const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: Tal
     setSearchTerm("");
   };
 
-  const selectedTaluk = taluks.find((t) => t.id === selectedTalukId);
+  const selectedTaluk = taluks.find((t) => t.id.toString() === selectedTalukId);
 
   return (
-    <div className={cn("relative w-full max-w-sm mx-auto", animation, className)}>
+    <div className={cn(
+      "relative w-full max-w-sm mx-auto", 
+      animation, 
+      className,
+      // Apply z-index when dropdown is open, but slightly lower than district when both are active
+      isOpen ? "z-40" : "z-0"
+    )}>
       <div className="mb-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
         <Map className="h-3.5 w-3.5" /> Select Taluk
       </div>
@@ -55,7 +69,7 @@ const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: Tal
           {selectedTaluk ? (
             <>
               <Map className="h-4 w-4 text-primary" />
-              {selectedTaluk.name}
+              {selectedTaluk.taluk}
             </>
           ) : (
             "Select a taluk"
@@ -81,18 +95,18 @@ const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: Tal
               <li key={taluk.id}>
                 <button
                   type="button"
-                  onClick={() => handleSelect(taluk.id)}
+                  onClick={() => handleSelect(taluk.id.toString())}
                   className={cn(
                     "flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-muted/50 transition-colors",
-                    selectedTalukId === taluk.id && "bg-primary/5 font-medium"
+                    selectedTalukId === taluk.id.toString() && "bg-primary/5 font-medium"
                   )}
                 >
                   <Map className={cn(
                     "h-4 w-4",
-                    selectedTalukId === taluk.id ? "text-primary" : "text-muted-foreground"
+                    selectedTalukId === taluk.id.toString() ? "text-primary" : "text-muted-foreground"
                   )} />
-                  <span>{taluk.name}</span>
-                  {selectedTalukId === taluk.id && (
+                  <span>{taluk.taluk}</span>
+                  {selectedTalukId === taluk.id.toString() && (
                     <Check className="h-4 w-4 text-primary ml-auto" />
                   )}
                 </button>

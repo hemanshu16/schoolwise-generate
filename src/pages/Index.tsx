@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
@@ -11,9 +11,23 @@ import { toast } from "sonner";
 import RoleSelectionView from "@/components/selection/RoleSelectionView";
 import SelectionFlow from "@/components/selection/SelectionFlow";
 import AuthenticationModals from "@/components/auth/AuthenticationModals";
-import { districts, taluks, schools } from "@/utils/mock-data";
+import { schools } from "@/utils/mock-data";
+import { useSupabase } from "@/lib/context/SupabaseContext";
+import { District, Taluk } from "@/lib/context/SupabaseContext";
 
 const Index = () => {
+  const { districts, taluks, refreshDistricts, refreshTaluks, loading } = useSupabase();
+  
+  // Refresh districts and taluks if needed
+  useEffect(() => {
+    if (districts.length === 0 && !loading) {
+      refreshDistricts();
+    }
+    if (taluks.length === 0 && !loading) {
+      refreshTaluks();
+    }
+  }, [districts, taluks, refreshDistricts, refreshTaluks, loading]);
+  
   // User role state
   const [userRole, setUserRole] = useState<"teacher" | "officer" | null>(null);
   const [officerPermission, setOfficerPermission] = useState<OfficerPermission>("none");
@@ -37,6 +51,17 @@ const Index = () => {
   // Unfilled schools modal state
   const [showUnfilledSchoolsModal, setShowUnfilledSchoolsModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  
+  // Helper functions to find entities
+  const findDistrictById = (id: string | null): District | undefined => {
+    if (!id) return undefined;
+    return districts.find(d => d.id.toString() === id);
+  };
+  
+  const findTalukById = (id: string | null): Taluk | undefined => {
+    if (!id) return undefined;
+    return taluks.find(t => t.id.toString() === id);
+  };
   
   // Handlers
   const handleRoleSelect = (role: "teacher" | "officer") => {
@@ -89,13 +114,11 @@ const Index = () => {
     // Simulate PDF generation and download
     setTimeout(() => {
       // Get entity names for the toast message
-      const selectedDistrictName = selectedDistrictId 
-        ? districts.find(d => d.id === selectedDistrictId)?.name || "Unknown"
-        : "Unknown";
-        
-      const selectedTalukName = selectedTalukId
-        ? taluks.find(t => t.id === selectedTalukId)?.name || "Unknown"
-        : "Unknown";
+      const selectedDistrict = findDistrictById(selectedDistrictId);
+      const selectedTaluk = findTalukById(selectedTalukId);
+      
+      const selectedDistrictName = selectedDistrict?.district || "Unknown";
+      const selectedTalukName = selectedTaluk?.taluk || "Unknown";
         
       const examNameFormatted = selectedExamName.replace(/\s+/g, "_");
       
@@ -226,9 +249,9 @@ Schools with unfilled marks:
                     type={currentAuthEntity} 
                     name={
                       currentAuthEntity === "district" 
-                        ? districts.find(d => d.id === selectedDistrictId)?.name || "" 
+                        ? findDistrictById(selectedDistrictId)?.district || "" 
                         : currentAuthEntity === "taluk" 
-                          ? taluks.find(t => t.id === selectedTalukId)?.name || "" 
+                          ? findTalukById(selectedTalukId)?.taluk || "" 
                           : schools.find(s => s.id === selectedSchoolId)?.name || ""
                     }
                     examName={examName}

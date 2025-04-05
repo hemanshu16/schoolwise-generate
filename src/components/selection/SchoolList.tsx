@@ -1,9 +1,8 @@
-
-import { useState } from "react";
-import { schools } from "@/utils/mock-data";
+import { useState, useEffect } from "react";
+import { useSupabase, School } from "@/lib/context/SupabaseContext";
 import { cn } from "@/lib/utils";
 import { useFadeAnimation } from "@/utils/animations";
-import { FileSpreadsheet, School } from "lucide-react";
+import { FileSpreadsheet, School as SchoolIcon } from "lucide-react";
 import PinAuth from "../auth/PinAuth";
 import { toast } from "sonner";
 import {
@@ -14,6 +13,9 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import ExamNameInput from "../reports/ExamNameInput";
+
+// These environment variables need to be set in your .env file
+const schoolReportUrl = import.meta.env.VITE_PUBLIC_SCHOOL_REPORT;
 
 interface SchoolListProps {
   talukId: string;
@@ -28,13 +30,23 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
   const [showSheetAuth, setShowSheetAuth] = useState(false);
   const [showExamNameModal, setShowExamNameModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [generatingReportForSchool, setGeneratingReportForSchool] = useState<string | null>(null);
   const animation = useFadeAnimation(true);
+  
+  const { schools, loading, error, getSchoolsByTaluk } = useSupabase();
 
-  // Filter schools by taluk and search term
+  // Fetch schools when talukId changes
+  useEffect(() => {
+    if (talukId) {
+      getSchoolsByTaluk(parseInt(talukId));
+    }
+  }, [talukId]);
+
+  // Filter schools by search term
   const filteredSchools = schools
-    .filter((school) => school.talukId === talukId)
     .filter((school) => 
-      school.name.toLowerCase().includes(searchTerm.toLowerCase())
+      school.school_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
   const handleGenerateReport = (schoolId: string) => {
@@ -43,8 +55,77 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
     if (userRole === "teacher") {
       setShowReportAuth(true);
     } else {
-      // For officers, show exam name modal directly
+      // For officer, show exam name dialog directly
       setShowExamNameModal(true);
+    }
+  };
+  const downloadReport = async (sheetId: string, examName: string) => {
+    try {
+      const school = schools.find(s => s.sheet_id === sheetId);
+      const schoolName = school?.school_name.split("_")[1] || "school";
+      
+      setIsGeneratingReport(true);
+      setGeneratingReportForSchool(schoolName);
+      
+      toast.loading(`Generating report for ${schoolName}...`, {
+        id: `report-${sheetId}`,
+      });
+      
+      const response = await fetch(schoolReportUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sheet_id: sheetId,
+          exam_name: examName
+        })
+      });
+
+      console.log('Response:', response);
+
+      if (!response.ok) {
+        toast.dismiss(`report-${sheetId}`);
+        
+        try {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          
+          try {
+            const parsedError = JSON.parse(errorText);
+            toast.error(`Error: ${parsedError.error || parsedError.message || 'Unknown error'}`);
+          } catch (parseError) {
+            toast.error(`Error ${response.status}: ${errorText || response.statusText || 'Bad Request'}`);
+          }
+        } catch (e) {
+          toast.error(`Failed to generate report: ${response.status} ${response.statusText}`);
+        }
+        return;
+      }
+
+      // Get filename from Content-Disposition header if present
+      const filename = response.headers.get('Content-Disposition')?.split('filename=')[1] || 'report.pdf';
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.dismiss(`report-${sheetId}`);
+      toast.success(`Report for ${schoolName} generated successfully`);
+      
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      toast.dismiss(`report-${sheetId}`);
+      toast.error('Failed to download report');
+    } finally {
+      setIsGeneratingReport(false);
+      setGeneratingReportForSchool(null);
     }
   };
 
@@ -56,27 +137,25 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
       setShowSheetAuth(true);
     } else {
       // For officers, directly open the sheet
-      const school = schools.find(s => s.id === schoolId);
-      toast.success(`Opening Google Sheet for ${school?.name}`);
-      window.open("https://docs.google.com/spreadsheets/create", "_blank");
+      const school = schools.find(s => s.id.toString() === schoolId);
+      toast.success(`Opening Google Sheet for ${school?.school_name}`);
+      window.open("https://docs.google.com/spreadsheets/d/"+school?.sheet_id, "_blank");
     }
   };
 
   const handleSheetAuthenticated = () => {
     setShowSheetAuth(false);
     
-    // Get the school name for the toast message
-    const school = schools.find(s => s.id === selectedSchoolId);
-    toast.success(`Opening Google Sheet for ${school?.name}`);
-    
-    // In a real app, you would redirect to the actual Google Sheet URL
-    window.open("https://docs.google.com/spreadsheets/create", "_blank");
+    const school = schools.find(s => s.id.toString() === selectedSchoolId);
+      toast.success(`Opening Google Sheet for ${school?.school_name}`);
+      window.open("https://docs.google.com/spreadsheets/d/"+school?.sheet_id, "_blank");
   };
 
-  const handleReportAuthenticated = () => {
+  const handleReportAuthenticated = (providedExamName?: string) => {
     setShowReportAuth(false);
-    if (selectedSchoolId) {
-      onSelectSchool(selectedSchoolId);
+    if (providedExamName && selectedSchoolId) {
+      const school = schools.find(s => s.id.toString() === selectedSchoolId);
+      downloadReport(school?.sheet_id, providedExamName);
     }
   };
   
@@ -84,9 +163,21 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
     setShowExamNameModal(false);
     
     if (selectedSchoolId) {
-      const school = schools.find(s => s.id === selectedSchoolId);
-      toast.success(`Generating report for ${school?.name} - ${examName}`);
-      onSelectSchool(selectedSchoolId);
+      const school = schools.find(s => s.id.toString() === selectedSchoolId);
+      
+      if (school) {
+        const schoolName = school.school_name.split("_")[1];
+        
+        // For officer, download the report directly
+        if (userRole === 'officer') {
+          downloadReport(school.sheet_id, examName);
+          toast.success(`Generating report for ${schoolName} - ${examName}`);
+        } else {
+          // For teacher, just notify selection (report will be handled elsewhere)
+          toast.success(`Generating report for ${schoolName} - ${examName}`);
+          onSelectSchool(selectedSchoolId);
+        }
+      }
     }
   };
 
@@ -94,7 +185,7 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
     <div className={cn("w-full", animation, className)}>
       <div className="flex items-center justify-between mb-4">
         <div className="mb-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-          <School className="h-3.5 w-3.5" /> Schools in Selected Taluk
+          <SchoolIcon className="h-3.5 w-3.5" /> Schools in Selected Taluk
         </div>
         
         <div className="relative w-64">
@@ -117,6 +208,7 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
             entityId={selectedSchoolId}
             onAuthenticate={handleSheetAuthenticated}
             authPurpose="sheet"
+            correctPin={schools.find(s => s.id.toString() === selectedSchoolId)?.school_name.split("_")[0]}
           />
         </DialogContent>
       </Dialog>
@@ -130,11 +222,12 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
             entityId={selectedSchoolId}
             onAuthenticate={handleReportAuthenticated}
             authPurpose="report"
+            correctPin={schools.find(s => s.id.toString() === selectedSchoolId)?.school_name.split("_")[0]}
           />
         </DialogContent>
       </Dialog>
       
-      {/* Exam Name Modal for Officer */}
+      {/* Exam Name Modal */}
       <Dialog open={showExamNameModal} onOpenChange={setShowExamNameModal}>
         <DialogContent className="sm:max-w-md">
           <DialogTitle>Select Exam</DialogTitle>
@@ -143,51 +236,65 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
       </Dialog>
 
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
-          <thead>
-            <tr className="bg-muted/30">
-              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">School Name</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Google Sheet</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSchools.map((school, index) => (
-              <tr 
-                key={school.id} 
-                className={cn(
-                  "border-t border-border/20 hover:bg-muted/20 transition-colors",
-                )}
-              >
-                <td className="px-4 py-3 font-medium">{school.name}</td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => handleSheetClick(school.id)}
-                    className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors"
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    <span className="underline underline-offset-2">Access Google Sheet</span>
-                  </button>
-                </td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => handleGenerateReport(school.id)}
-                    className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md text-sm font-medium transition-colors"
-                  >
-                    Generate Report
-                  </button>
-                </td>
+        {loading ? (
+          <div className="py-20 text-center text-muted-foreground">Loading schools...</div>
+        ) : error ? (
+          <div className="py-20 text-center text-red-500">Error loading schools: {error}</div>
+        ) : (
+          <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
+            <thead>
+              <tr className="bg-muted/30">
+                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">School Name</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Google Sheet</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
-            ))}
-            {filteredSchools.length === 0 && (
-              <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
-                  No schools found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredSchools.map((school) => (
+                <tr 
+                  key={school.id} 
+                  className={cn(
+                    "border-t border-border/20 hover:bg-muted/20 transition-colors",
+                  )}
+                >
+                  <td className="px-4 py-3 font-medium">{school.school_name.split("_")[1]}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleSheetClick(school.id.toString())}
+                      className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      <span className="underline underline-offset-2">Access Google Sheet</span>
+                    </button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleGenerateReport(school.id.toString())}
+                      disabled={isGeneratingReport}
+                      className={cn(
+                        "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                        isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
+                          ? "bg-muted text-muted-foreground cursor-not-allowed"
+                          : "bg-primary/10 text-primary hover:bg-primary/20"
+                      )}
+                    >
+                      {isGeneratingReport && generatingReportForSchool === school.school_name.split("_")[1]
+                        ? "Generating..."
+                        : "Generate Report"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredSchools.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
+                    No schools found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

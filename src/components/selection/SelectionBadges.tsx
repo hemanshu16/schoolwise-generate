@@ -1,6 +1,7 @@
-
-import { districts, schools, taluks } from "@/utils/mock-data";
+import { schools, taluks } from "@/utils/mock-data";
 import SelectionBadge from "@/components/ui/SelectionBadge";
+import { useSupabase } from "@/lib/context/SupabaseContext";
+import { useEffect } from "react";
 
 interface SelectionBadgesProps {
   userRole: "teacher" | "officer" | null;
@@ -21,8 +22,17 @@ const SelectionBadges = ({
   isAuthenticated,
   onReset
 }: SelectionBadgesProps) => {
+  const { districts, refreshDistricts, loading } = useSupabase();
+  
+  // Refresh districts if needed
+  useEffect(() => {
+    if (districts.length === 0 && !loading) {
+      refreshDistricts();
+    }
+  }, [districts, refreshDistricts, loading]);
+  
   // Helpers for entity names
-  const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
+  const selectedDistrict = districts.find(d => d.id.toString() === selectedDistrictId);
   const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
   const selectedSchool = schools.find(s => s.id === selectedSchoolId);
 
@@ -43,7 +53,7 @@ const SelectionBadges = ({
       {selectedDistrictId && (
         <SelectionBadge 
           label="District"
-          value={selectedDistrict?.name}
+          value={selectedDistrict?.district}
           isActive={true}
         />
       )}

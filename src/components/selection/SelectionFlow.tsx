@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { districts, schools, taluks } from "@/utils/mock-data";
+import { useState, useEffect } from "react";
+import { schools, taluks } from "@/utils/mock-data";
 import DistrictSelector from "@/components/selection/DistrictSelector";
 import TalukSelector from "@/components/selection/TalukaSelector";
 import SchoolList from "@/components/selection/SchoolList";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ExamNameInput from "@/components/reports/ExamNameInput";
 import { AlertTriangle } from "lucide-react";
+import { useSupabase } from "@/lib/context/SupabaseContext";
 
 interface SelectionFlowProps {
   userRole: "teacher" | "officer";
@@ -25,6 +26,15 @@ const SelectionFlow = ({
   onGenerateReport,
   onShowUnfilledSchools
 }: SelectionFlowProps) => {
+  const { districts, refreshDistricts, loading } = useSupabase();
+  
+  // Refresh districts if needed
+  useEffect(() => {
+    if (districts.length === 0 && !loading) {
+      refreshDistricts();
+    }
+  }, [districts, refreshDistricts, loading]);
+  
   // Selection state
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
   const [selectedTalukId, setSelectedTalukId] = useState<string | null>(null);
@@ -42,7 +52,7 @@ const SelectionFlow = ({
   const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
   
   // Helpers for entity names
-  const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
+  const selectedDistrict = districts.find(d => d.id.toString() === selectedDistrictId);
   const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
   
   // Determine if report generation buttons should be shown
@@ -88,7 +98,7 @@ const SelectionFlow = ({
         onGenerateReport(pendingReportType, entityId, selectedExamName);
         
         const entityName = pendingReportType === "district" 
-          ? selectedDistrict?.name 
+          ? selectedDistrict?.district 
           : pendingReportType === "taluk" 
             ? selectedTaluk?.name 
             : schools.find(s => s.id === entityId)?.name;
