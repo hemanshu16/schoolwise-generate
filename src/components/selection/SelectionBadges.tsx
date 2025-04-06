@@ -1,44 +1,28 @@
-import { schools, taluks } from "@/utils/mock-data";
 import SelectionBadge from "@/components/ui/SelectionBadge";
 import { useSupabase } from "@/lib/context/SupabaseContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SelectionBadgesProps {
-  userRole: "teacher" | "officer" | null;
-  selectedDistrictId: string | null;
-  selectedTalukId: string | null;
-  selectedSchoolId: string | null;
-  examName: string;
+  userRole: "teacher" | "district_officer" | "taluk_officer" | null;
+  districtName: string | null;
+  talukName: string | null;
+  schoolName: string | null;
   isAuthenticated: boolean;
   onReset: () => void;
 }
 
 const SelectionBadges = ({
   userRole,
-  selectedDistrictId,
-  selectedTalukId,
-  selectedSchoolId,
-  examName,
+  districtName,
+  talukName,
+  schoolName,
   isAuthenticated,
   onReset
 }: SelectionBadgesProps) => {
-  const { districts, refreshDistricts, loading } = useSupabase();
-  
-  // Refresh districts if needed
-  useEffect(() => {
-    if (districts.length === 0 && !loading) {
-      refreshDistricts();
-    }
-  }, [districts, refreshDistricts, loading]);
-  
-  // Helpers for entity names
-  const selectedDistrict = districts.find(d => d.id.toString() === selectedDistrictId);
-  const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
-  const selectedSchool = schools.find(s => s.id === selectedSchoolId);
 
-  if (!selectedDistrictId && !selectedTalukId && !selectedSchoolId) {
+  if (!districtName && !talukName && !schoolName) {
     return null;
   }
 
@@ -53,37 +37,28 @@ const SelectionBadges = ({
         />
       )}
       
-      {selectedDistrictId && (
+      {districtName && (
         <SelectionBadge 
           label="District"
-          value={selectedDistrict?.district}
+          value={districtName}
           isActive={true}
           className="text-xs sm:text-sm"
         />
       )}
       
-      {selectedTalukId && (
+      {talukName && (
         <SelectionBadge 
           label="Taluk"
-          value={selectedTaluk?.name}
+          value={talukName}
           isActive={true}
           className="text-xs sm:text-sm"
         />
       )}
       
-      {selectedSchoolId && isAuthenticated && (
+      {schoolName && isAuthenticated && (
         <SelectionBadge 
           label="School"
-          value={selectedSchool?.name}
-          isActive={true}
-          className="text-xs sm:text-sm"
-        />
-      )}
-
-      {examName && (
-        <SelectionBadge 
-          label="Exam"
-          value={examName}
+          value={schoolName}
           isActive={true}
           className="text-xs sm:text-sm"
         />

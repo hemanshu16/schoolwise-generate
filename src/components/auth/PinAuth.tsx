@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { AlertCircle, FileSpreadsheet, Key, LockKeyhole } from "lucide-react";
 import { useFadeAnimation } from "@/utils/animations";
 import { toast } from "sonner";
-import { schools, taluks } from "@/utils/mock-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useSupabase } from '@/lib/context/SupabaseContext';
 
@@ -59,26 +58,12 @@ const useEntityDetails = (entityType: "district" | "taluk" | "school", entityId:
   }, [districts, refreshDistricts, loading]);
   
   const getEntityName = () => {
-    if (entityType === "district" && entityId) {
-      return districts.find((d) => d.id.toString() === entityId)?.district || "";
-    } else if (entityType === "taluk" && entityId) {
-      return taluks.find((t) => t.id === entityId)?.name || "";
-    } else if (entityType === "school" && entityId) {
-      return schools.find((s) => s.id === entityId)?.name || "";
-    }
+   
     return "";
   };
 
   const getEntityPin = () => {
-    if (entityType === "district" && entityId) {
-      // Note: Since we're migrating from mock data to Supabase, you'll need to add a 'password' field 
-      // to your district table in Supabase. For now, we'll use a placeholder.
-      return "1234"; // Placeholder PIN - in production this should come from Supabase
-    } else if (entityType === "taluk" && entityId) {
-      return taluks.find((t) => t.id === entityId)?.pin || "";
-    } else if (entityType === "school" && entityId) {
-      return schools.find((s) => s.id === entityId)?.pin || "";
-    }
+    
     return "";
   };
 
@@ -213,8 +198,6 @@ const PinAuth = ({
 
     // Simulate an API call
     setTimeout(() => {
-      console.log(correctPin);
-      console.log(pin);
       if (pin === correctPin) {
         const message = authPurpose === "report"
           ? `Successfully authenticated for ${entityName} report`

@@ -1,7 +1,7 @@
 import RoleSelector from "@/components/selection/RoleSelector";
 
 interface RoleSelectionViewProps {
-  onSelectRole: (role: "teacher" | "officer") => void;
+  onSelectRole: (role: "teacher" | "district_officer" | "taluk_officer") => void;
 }
 
 const RoleSelectionView = ({ onSelectRole }: RoleSelectionViewProps) => {

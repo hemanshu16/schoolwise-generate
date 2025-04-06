@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import PinAuth from "@/components/auth/PinAuth";
 import OfficerAuth from "@/components/auth/OfficerAuth";
 import { OfficerPermission } from "@/components/auth/OfficerAuth";
-import ExamNameInput from "@/components/reports/ExamNameInput";
+import { ExamNameInputContent } from "@/components/reports/ExamNameInput";
+import { District, Taluk } from "@/lib/context/SupabaseContext";
 
 interface AuthenticationModalsProps {
   showAuthModal: boolean;
@@ -12,16 +12,21 @@ interface AuthenticationModalsProps {
   showUnfilledSchoolsModal: boolean;
   currentAuthEntity: "district" | "taluk" | "school" | null;
   entityId: string | null;
-  userRole: "teacher" | "officer" | null;
+  userRole: "teacher" | "district_officer" | "taluk_officer" | null;
   pendingReportType: "district" | "taluk" | null;
   isDownloading: boolean;
+  selectedTalukId: string | null;
   onAuthDialogChange: (open: boolean) => void;
   onExamNameModalChange: (open: boolean) => void;
   onUnfilledSchoolsModalChange: (open: boolean) => void;
   onOfficerAuthenticate: (permission: OfficerPermission) => void;
   onAuthenticate: () => void;
   onExamNameSubmit: (examName: string) => void;
-  onUnfilledSchoolsExamNameSubmit: (examName: string) => void;
+  setSelectedDistrictId: (districtId: string) => void;
+  setSelectedDistrict: (district: District) => void;
+  setSelectedTalukId: (talukId: string) => void;
+  setSelectedTaluk: (taluk: Taluk) => void;
+  setUserRole: (role: "teacher" | "district_officer" | "taluk_officer") => void;
 }
 
 const AuthenticationModals = ({
@@ -33,23 +38,37 @@ const AuthenticationModals = ({
   userRole,
   pendingReportType,
   isDownloading,
+  selectedTalukId,
   onAuthDialogChange,
   onExamNameModalChange,
   onUnfilledSchoolsModalChange,
   onOfficerAuthenticate,
   onAuthenticate,
   onExamNameSubmit,
-  onUnfilledSchoolsExamNameSubmit
+  setSelectedDistrictId,
+  setSelectedDistrict,
+  setSelectedTalukId,
+  setSelectedTaluk,
+  setUserRole
 }: AuthenticationModalsProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+ 
+
   return (
     <>
       {/* Authentication Modal */}
       <Dialog open={showAuthModal} onOpenChange={onAuthDialogChange}>
         <DialogContent className="sm:max-w-md">
-          {userRole === "officer" && !currentAuthEntity ? (
+          {userRole !== "teacher" && !currentAuthEntity ? (
             <>
-              <DialogTitle className="sr-only">Officer Authentication</DialogTitle>
-              <OfficerAuth onAuthenticate={onOfficerAuthenticate} />
+              <DialogTitle className="sr-only">Officer Authentication 1</DialogTitle>
+              <OfficerAuth onAuthenticate={onOfficerAuthenticate}
+               setSelectedDistrictId={setSelectedDistrictId} 
+               setSelectedDistrict={setSelectedDistrict}
+               setSelectedTalukId={setSelectedTalukId}
+               setSelectedTaluk={setSelectedTaluk}
+               setUserRole={setUserRole}
+               />
             </>
           ) : (
             <>
@@ -71,7 +90,10 @@ const AuthenticationModals = ({
       >
         <DialogContent className="sm:max-w-md">
           <DialogTitle>Select Exam</DialogTitle>
-          <ExamNameInput onSubmit={onExamNameSubmit} />
+          <ExamNameInputContent 
+            onClose={() => onExamNameModalChange(false)}
+            onSubmit={onExamNameSubmit} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -82,7 +104,12 @@ const AuthenticationModals = ({
       >
         <DialogContent className="sm:max-w-md">
           <DialogTitle>Download Unfilled Schools List</DialogTitle>
-          <ExamNameInput onSubmit={onUnfilledSchoolsExamNameSubmit} />
+          <ExamNameInputContent 
+            onClose={() => onUnfilledSchoolsModalChange(false)}
+            isLoading={isSubmitting || isDownloading}
+            loadingText="Downloading..."
+            onSubmit={onExamNameSubmit}
+          />
         </DialogContent>
       </Dialog>
     </>

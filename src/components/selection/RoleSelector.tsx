@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { useFadeAnimation } from "@/utils/animations";
 
 interface RoleSelectorProps {
-  onSelectRole: (role: "teacher" | "officer") => void;
+  onSelectRole: (role: "teacher" | "district_officer" | "taluk_officer") => void;
   className?: string;
 }
 
@@ -28,7 +28,7 @@ const RoleSelector = ({ onSelectRole, className }: RoleSelectorProps) => {
         </button>
         
         <button
-          onClick={() => onSelectRole("officer")}
+          onClick={() => onSelectRole("district_officer")}
           className="flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 bg-white rounded-lg border border-border/60 shadow-sm hover:shadow-md transition-all hover:border-primary/30"
         >
           <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">

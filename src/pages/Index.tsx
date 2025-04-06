@@ -3,7 +3,6 @@ import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import SelectionBadges from "@/components/selection/SelectionBadges";
-import ReportView from "@/components/reports/ReportView";
 import { cn } from "@/lib/utils";
 import { OfficerPermission } from "@/components/auth/OfficerAuth";
 import { Button } from "@/components/ui/button";
@@ -11,25 +10,22 @@ import { toast } from "sonner";
 import RoleSelectionView from "@/components/selection/RoleSelectionView";
 import SelectionFlow from "@/components/selection/SelectionFlow";
 import AuthenticationModals from "@/components/auth/AuthenticationModals";
-import { schools } from "@/utils/mock-data";
 import { useSupabase } from "@/lib/context/SupabaseContext";
 import { District, Taluk } from "@/lib/context/SupabaseContext";
+import * as XLSX from 'xlsx';
 
 const Index = () => {
-  const { districts, taluks, refreshDistricts, refreshTaluks, loading } = useSupabase();
+  const { districts, taluks, refreshDistricts, loading } = useSupabase();
   
-  // Refresh districts and taluks if needed
+  // Refresh districts if needed
   useEffect(() => {
     if (districts.length === 0 && !loading) {
       refreshDistricts();
     }
-    if (taluks.length === 0 && !loading) {
-      refreshTaluks();
-    }
-  }, [districts, taluks, refreshDistricts, refreshTaluks, loading]);
+  }, [districts, refreshDistricts, loading]);
   
   // User role state
-  const [userRole, setUserRole] = useState<"teacher" | "officer" | null>(null);
+  const [userRole, setUserRole] = useState<"teacher" | "district_officer" | "taluk_officer" | null>(null);
   const [officerPermission, setOfficerPermission] = useState<OfficerPermission>("none");
   const [isOfficerAuthenticated, setIsOfficerAuthenticated] = useState(false);
   
@@ -37,6 +33,8 @@ const Index = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
   const [selectedTalukId, setSelectedTalukId] = useState<string | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
+  const [selectedTaluk, setSelectedTaluk] = useState<Taluk | null>(null);
   const [examName, setExamName] = useState<string>("");
   
   // Authentication and view state
@@ -64,7 +62,7 @@ const Index = () => {
   };
   
   // Handlers
-  const handleRoleSelect = (role: "teacher" | "officer") => {
+  const handleRoleSelect = (role: "teacher" | "district_officer" | "taluk_officer") => {
     setUserRole(role);
     setSelectedDistrictId(null);
     setSelectedTalukId(null);
@@ -74,7 +72,7 @@ const Index = () => {
     setIsOfficerAuthenticated(false);
     
     // If officer, show auth dialog
-    if (role === "officer") {
+    if (role !== "teacher") {
       setShowAuthModal(true);
       setCurrentAuthEntity(null);
     }
@@ -101,60 +99,17 @@ const Index = () => {
     }
   };
   
-  const handleShowUnfilledSchools = (selectedExamName: string) => {
+  const handleShowUnfilledSchools = (selectedExamName: string, talukId?: string) => {
+    if (talukId) {
+      setSelectedTalukId(talukId);
+    }
+    
     setExamName(selectedExamName);
+    setPendingReportType("taluk");
     setShowUnfilledSchoolsModal(true);
   };
   
-  const handleDownloadUnfilledSchools = (selectedExamName: string) => {
-    // Start the download process with the selected exam name
-    setIsDownloading(true);
-    setExamName(selectedExamName);
-    
-    // Simulate PDF generation and download
-    setTimeout(() => {
-      // Get entity names for the toast message
-      const selectedDistrict = findDistrictById(selectedDistrictId);
-      const selectedTaluk = findTalukById(selectedTalukId);
-      
-      const selectedDistrictName = selectedDistrict?.district || "Unknown";
-      const selectedTalukName = selectedTaluk?.taluk || "Unknown";
-        
-      const examNameFormatted = selectedExamName.replace(/\s+/g, "_");
-      
-      // Create PDF content
-      const pdfContent = `Unfilled Schools Report
-District: ${selectedDistrictName}
-Taluk: ${selectedTalukName}
-Exam: ${selectedExamName}
-
-Schools with unfilled marks:
-1. Govt High School Mahadevapura
-2. Govt Primary School Vignan Nagar
-3. St. Mary's School
-4. Model Public School`;
-      
-      // Create a Blob and download it with PDF mimetype
-      const blob = new Blob([pdfContent], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `unfilled_schools_${selectedTalukName}_${examNameFormatted}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      setIsDownloading(false);
-      setShowUnfilledSchoolsModal(false);
-      
-      toast.success("Downloaded PDF list of schools with unfilled exam marks", {
-        description: `${examNameFormatted} - ${selectedTalukName}, ${selectedDistrictName}`
-      });
-    }, 1500);
-  };
+  
   
   const handleAuthenticate = () => {
     setIsAuthenticated(true);
@@ -175,6 +130,11 @@ Schools with unfilled marks:
     setShowUnfilledSchoolsModal(false);
     setShowExamNameModal(false);
     setPendingReportType(null);
+    setSelectedDistrict(null);
+    setSelectedDistrictId(null);
+    setSelectedTaluk(null);
+    setSelectedTalukId(null);
+    setSelectedSchoolId(null);
   };
 
   // Handle going back to role selection
@@ -185,11 +145,11 @@ Schools with unfilled marks:
   // Handle dialog close - reset to role selection if officer not authenticated yet
   const handleDialogOpenChange = (open: boolean) => {
     setShowAuthModal(open);
-    if (!open && userRole === "officer" && !isOfficerAuthenticated) {
+    if (!open && userRole !== "teacher" && !isOfficerAuthenticated) {
       setUserRole(null);
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -219,10 +179,9 @@ Schools with unfilled marks:
               {/* Selection badges */}
               <SelectionBadges 
                 userRole={userRole}
-                selectedDistrictId={selectedDistrictId}
-                selectedTalukId={selectedTalukId}
-                selectedSchoolId={selectedSchoolId}
-                examName={examName}
+                districtName={selectedDistrict?.district}
+                talukName={selectedTaluk?.taluk}
+                schoolName={selectedSchoolId}
                 isAuthenticated={isAuthenticated}
                 onReset={handleReset}
               />
@@ -241,21 +200,18 @@ Schools with unfilled marks:
                     isOfficerAuthenticated={isOfficerAuthenticated}
                     onGenerateReport={handleGenerateReport}
                     onShowUnfilledSchools={handleShowUnfilledSchools}
-                  />
-                )}
-                
-                {/* Report View */}
-                {isAuthenticated && currentAuthEntity && (
-                  <ReportView 
-                    type={currentAuthEntity} 
-                    name={
-                      currentAuthEntity === "district" 
-                        ? findDistrictById(selectedDistrictId)?.district || "" 
-                        : currentAuthEntity === "taluk" 
-                          ? findTalukById(selectedTalukId)?.taluk || "" 
-                          : schools.find(s => s.id === selectedSchoolId)?.name || ""
-                    }
-                    examName={examName}
+                    selectedDistrictId={selectedDistrictId}
+                    selectedDistrict={selectedDistrict}
+                    setSelectedDistrictId={setSelectedDistrictId}
+                    setSelectedDistrict={setSelectedDistrict}
+                    setSelectedTalukId={setSelectedTalukId}
+                    setSelectedTaluk={setSelectedTaluk}
+                    selectedTalukId={selectedTalukId}
+                    selectedTaluk={selectedTaluk}
+                    onSelectionChange={(districtId, talukId) => {
+                      if (districtId) setSelectedDistrictId(selectedDistrictId);
+                      if (talukId) setSelectedTalukId(talukId);
+                    }}
                   />
                 )}
               </div>
@@ -270,6 +226,7 @@ Schools with unfilled marks:
         showExamNameModal={showExamNameModal}
         showUnfilledSchoolsModal={showUnfilledSchoolsModal}
         currentAuthEntity={currentAuthEntity}
+        setSelectedDistrict={setSelectedDistrict}
         entityId={
           currentAuthEntity === "district" 
             ? selectedDistrictId 
@@ -278,13 +235,18 @@ Schools with unfilled marks:
               : selectedSchoolId
         }
         userRole={userRole}
+        setUserRole={setUserRole}
         pendingReportType={pendingReportType}
         isDownloading={isDownloading}
+        selectedTalukId={selectedTalukId}
         onAuthDialogChange={handleDialogOpenChange}
         onExamNameModalChange={setShowExamNameModal}
         onUnfilledSchoolsModalChange={setShowUnfilledSchoolsModal}
         onOfficerAuthenticate={handleOfficerAuthenticate}
         onAuthenticate={handleAuthenticate}
+        setSelectedDistrictId={setSelectedDistrictId}
+        setSelectedTalukId={setSelectedTalukId}
+        setSelectedTaluk={setSelectedTaluk}
         onExamNameSubmit={(selectedExamName) => {
           setExamName(selectedExamName);
           handleGenerateReport(pendingReportType || "school", 
@@ -296,7 +258,6 @@ Schools with unfilled marks:
             selectedExamName
           );
         }}
-        onUnfilledSchoolsExamNameSubmit={handleDownloadUnfilledSchools}
       />
     </div>
   );
