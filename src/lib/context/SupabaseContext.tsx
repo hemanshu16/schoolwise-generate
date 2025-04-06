@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { fetchAllExamNames, addExamName, updateExamName, deleteExamName } from '../examNameOperations';
 import { fetchAllDistricts, getDistrictById } from '../districtOperations';
-import { fetchAllTaluks, fetchTaluksByDistrictId, getTalukById } from '../talukOperations';
+import { fetchTaluksByDistrictId, getTalukById } from '../talukOperations';
 import { fetchAllSchools, fetchSchoolsByTalukId, getSchoolById, School as SchoolType } from '../schoolOperations';
 
 // Define types for our data
@@ -48,7 +48,6 @@ type SupabaseContextType = {
   getDistrictById: (id: number) => Promise<District | null>;
   
   // Taluk operations - read only
-  refreshTaluks: () => Promise<void>;
   getTaluksByDistrict: (districtId: number) => Promise<void>;
   getTalukById: (id: number) => Promise<Taluk | null>;
 
@@ -78,7 +77,6 @@ const SupabaseContext = createContext<SupabaseContextType>({
   getDistrictById: async () => null,
   
   // Taluk operations - read only
-  refreshTaluks: async () => {},
   getTaluksByDistrict: async () => {},
   getTalukById: async () => null,
 
@@ -104,10 +102,19 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Add refs to track if data has been loaded
+  const examNamesLoaded = useRef<boolean>(false);
+  const districtsLoaded = useRef<boolean>(false);
 
   // Function to fetch exam names from Supabase
   const fetchExamNames = async () => {
     try {
+      // If exam names are already loaded and not empty, skip the fetch
+      if (examNamesLoaded.current && examNames.length > 0) {
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       
@@ -116,6 +123,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
       if (error) throw error;
       
       setExamNames(data || []);
+      examNamesLoaded.current = true;
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -130,6 +138,11 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
   // Function to fetch districts from Supabase
   const fetchDistricts = async () => {
     try {
+      // If districts are already loaded and not empty, skip the fetch
+      if (districtsLoaded.current && districts.length > 0) {
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       
@@ -138,6 +151,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
       if (error) throw error;
       
       setDistricts(data || []);
+      districtsLoaded.current = true;
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -164,28 +178,6 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
         setError('An unknown error occurred');
       }
       return null;
-    }
-  };
-
-  // Function to fetch taluks from Supabase
-  const fetchTaluks = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const { data, error } = await fetchAllTaluks();
-      
-      if (error) throw error;
-      
-      setTaluks(data || []);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unknown error occurred');
-      }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -234,12 +226,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
     try {
       setLoading(true);
       setError(null);
-      
-      const { data, error } = await fetchAllSchools();
-      
-      if (error) throw error;
-      
-      setSchools(data || []);
+      setSchools( []);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -344,8 +331,6 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
   useEffect(() => {
     fetchExamNames();
     fetchDistricts();
-    fetchTaluks();
-    fetchSchools();
   }, []);
 
   // Create value object
@@ -368,7 +353,6 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
     getDistrictById: fetchDistrictById,
     
     // Taluk operations - read only
-    refreshTaluks: fetchTaluks,
     getTaluksByDistrict: fetchTaluksByDistrict,
     getTalukById: fetchTalukById,
 

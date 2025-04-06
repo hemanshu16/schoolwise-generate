@@ -24,7 +24,7 @@ export function TalukDropdown({
   placeholder = "Select taluk",
   className
 }: TalukDropdownProps) {
-  const { taluks, refreshTaluks, getTaluksByDistrict, loading } = useSupabase();
+  const { taluks, getTaluksByDistrict, loading } = useSupabase();
   const [selectedTaluk, setSelectedTaluk] = useState<string | undefined>(defaultValue);
   
   // Fetch taluks when districtId changes
@@ -32,10 +32,10 @@ export function TalukDropdown({
     if (districtId) {
       getTaluksByDistrict(districtId);
     } else {
-      // If no district selected, load all taluks
-      refreshTaluks();
+      // If no district selected, clear taluks
+      setSelectedTaluk(undefined);
     }
-  }, [districtId, getTaluksByDistrict, refreshTaluks]);
+  }, [districtId, getTaluksByDistrict]);
 
   // Reset selection when district changes
   useEffect(() => {

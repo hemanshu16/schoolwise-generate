@@ -1,7 +1,7 @@
 import { schools, taluks } from "@/utils/mock-data";
 import SelectionBadge from "@/components/ui/SelectionBadge";
 import { useSupabase } from "@/lib/context/SupabaseContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,8 @@ const SelectionBadges = ({
   isAuthenticated,
   onReset
 }: SelectionBadgesProps) => {
-  const { districts, refreshDistricts, loading } = useSupabase();
+  const { districts, taluks: dbTaluks, refreshDistricts, loading } = useSupabase();
+  const [talukName, setTalukName] = useState<string | undefined>();
   
   // Refresh districts if needed
   useEffect(() => {
@@ -33,9 +34,26 @@ const SelectionBadges = ({
     }
   }, [districts, refreshDistricts, loading]);
   
+  // Fetch taluk name when selectedTalukId changes
+  useEffect(() => {
+    if (selectedTalukId) {
+      // First try to get from database
+      const dbTaluk = dbTaluks.find(t => t.id.toString() === selectedTalukId);
+      if (dbTaluk) {
+        setTalukName(dbTaluk.taluk);
+        return;
+      }
+      
+      // Fallback to mock data
+      const mockTaluk = taluks.find(t => t.id === selectedTalukId);
+      if (mockTaluk) {
+        setTalukName(mockTaluk.name);
+      }
+    }
+  }, [selectedTalukId, dbTaluks]);
+  
   // Helpers for entity names
   const selectedDistrict = districts.find(d => d.id.toString() === selectedDistrictId);
-  const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
   const selectedSchool = schools.find(s => s.id === selectedSchoolId);
 
   if (!selectedDistrictId && !selectedTalukId && !selectedSchoolId) {
@@ -65,7 +83,7 @@ const SelectionBadges = ({
       {selectedTalukId && (
         <SelectionBadge 
           label="Taluk"
-          value={selectedTaluk?.name}
+          value={talukName}
           isActive={true}
           className="text-xs sm:text-sm"
         />
@@ -80,7 +98,8 @@ const SelectionBadges = ({
         />
       )}
 
-      {examName && (
+      {/* Only show exam name if we're authenticated (viewing a report) */}
+      {examName && isAuthenticated && (
         <SelectionBadge 
           label="Exam"
           value={examName}

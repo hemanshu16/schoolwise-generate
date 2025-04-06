@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import PinAuth from "@/components/auth/PinAuth";
 import OfficerAuth from "@/components/auth/OfficerAuth";
 import { OfficerPermission } from "@/components/auth/OfficerAuth";
-import ExamNameInput from "@/components/reports/ExamNameInput";
+import { ExamNameInputContent } from "@/components/reports/ExamNameInput";
 
 interface AuthenticationModalsProps {
   showAuthModal: boolean;
@@ -15,13 +14,13 @@ interface AuthenticationModalsProps {
   userRole: "teacher" | "officer" | null;
   pendingReportType: "district" | "taluk" | null;
   isDownloading: boolean;
+  selectedTalukId: string | null;
   onAuthDialogChange: (open: boolean) => void;
   onExamNameModalChange: (open: boolean) => void;
   onUnfilledSchoolsModalChange: (open: boolean) => void;
   onOfficerAuthenticate: (permission: OfficerPermission) => void;
   onAuthenticate: () => void;
   onExamNameSubmit: (examName: string) => void;
-  onUnfilledSchoolsExamNameSubmit: (examName: string) => void;
 }
 
 const AuthenticationModals = ({
@@ -33,14 +32,18 @@ const AuthenticationModals = ({
   userRole,
   pendingReportType,
   isDownloading,
+  selectedTalukId,
   onAuthDialogChange,
   onExamNameModalChange,
   onUnfilledSchoolsModalChange,
   onOfficerAuthenticate,
   onAuthenticate,
-  onExamNameSubmit,
-  onUnfilledSchoolsExamNameSubmit
+  onExamNameSubmit
 }: AuthenticationModalsProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+
   return (
     <>
       {/* Authentication Modal */}
@@ -71,7 +74,10 @@ const AuthenticationModals = ({
       >
         <DialogContent className="sm:max-w-md">
           <DialogTitle>Select Exam</DialogTitle>
-          <ExamNameInput onSubmit={onExamNameSubmit} />
+          <ExamNameInputContent 
+            onClose={() => onExamNameModalChange(false)}
+            onSubmit={onExamNameSubmit} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -82,7 +88,12 @@ const AuthenticationModals = ({
       >
         <DialogContent className="sm:max-w-md">
           <DialogTitle>Download Unfilled Schools List</DialogTitle>
-          <ExamNameInput onSubmit={onUnfilledSchoolsExamNameSubmit} />
+          <ExamNameInputContent 
+            onClose={() => onUnfilledSchoolsModalChange(false)}
+            isLoading={isSubmitting || isDownloading}
+            loadingText="Downloading..."
+            onSubmit={onExamNameSubmit}
+          />
         </DialogContent>
       </Dialog>
     </>

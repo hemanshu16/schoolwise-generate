@@ -14,19 +14,17 @@ import AuthenticationModals from "@/components/auth/AuthenticationModals";
 import { schools } from "@/utils/mock-data";
 import { useSupabase } from "@/lib/context/SupabaseContext";
 import { District, Taluk } from "@/lib/context/SupabaseContext";
+import * as XLSX from 'xlsx';
 
 const Index = () => {
-  const { districts, taluks, refreshDistricts, refreshTaluks, loading } = useSupabase();
+  const { districts, taluks, refreshDistricts, loading } = useSupabase();
   
-  // Refresh districts and taluks if needed
+  // Refresh districts if needed
   useEffect(() => {
     if (districts.length === 0 && !loading) {
       refreshDistricts();
     }
-    if (taluks.length === 0 && !loading) {
-      refreshTaluks();
-    }
-  }, [districts, taluks, refreshDistricts, refreshTaluks, loading]);
+  }, [districts, refreshDistricts, loading]);
   
   // User role state
   const [userRole, setUserRole] = useState<"teacher" | "officer" | null>(null);
@@ -101,60 +99,17 @@ const Index = () => {
     }
   };
   
-  const handleShowUnfilledSchools = (selectedExamName: string) => {
+  const handleShowUnfilledSchools = (selectedExamName: string, talukId?: string) => {
+    if (talukId) {
+      setSelectedTalukId(talukId);
+    }
+    
     setExamName(selectedExamName);
+    setPendingReportType("taluk");
     setShowUnfilledSchoolsModal(true);
   };
   
-  const handleDownloadUnfilledSchools = (selectedExamName: string) => {
-    // Start the download process with the selected exam name
-    setIsDownloading(true);
-    setExamName(selectedExamName);
-    
-    // Simulate PDF generation and download
-    setTimeout(() => {
-      // Get entity names for the toast message
-      const selectedDistrict = findDistrictById(selectedDistrictId);
-      const selectedTaluk = findTalukById(selectedTalukId);
-      
-      const selectedDistrictName = selectedDistrict?.district || "Unknown";
-      const selectedTalukName = selectedTaluk?.taluk || "Unknown";
-        
-      const examNameFormatted = selectedExamName.replace(/\s+/g, "_");
-      
-      // Create PDF content
-      const pdfContent = `Unfilled Schools Report
-District: ${selectedDistrictName}
-Taluk: ${selectedTalukName}
-Exam: ${selectedExamName}
-
-Schools with unfilled marks:
-1. Govt High School Mahadevapura
-2. Govt Primary School Vignan Nagar
-3. St. Mary's School
-4. Model Public School`;
-      
-      // Create a Blob and download it with PDF mimetype
-      const blob = new Blob([pdfContent], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `unfilled_schools_${selectedTalukName}_${examNameFormatted}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      setIsDownloading(false);
-      setShowUnfilledSchoolsModal(false);
-      
-      toast.success("Downloaded PDF list of schools with unfilled exam marks", {
-        description: `${examNameFormatted} - ${selectedTalukName}, ${selectedDistrictName}`
-      });
-    }, 1500);
-  };
+  
   
   const handleAuthenticate = () => {
     setIsAuthenticated(true);
@@ -241,6 +196,10 @@ Schools with unfilled marks:
                     isOfficerAuthenticated={isOfficerAuthenticated}
                     onGenerateReport={handleGenerateReport}
                     onShowUnfilledSchools={handleShowUnfilledSchools}
+                    onSelectionChange={(districtId, talukId) => {
+                      if (districtId) setSelectedDistrictId(districtId);
+                      if (talukId) setSelectedTalukId(talukId);
+                    }}
                   />
                 )}
                 
@@ -280,6 +239,7 @@ Schools with unfilled marks:
         userRole={userRole}
         pendingReportType={pendingReportType}
         isDownloading={isDownloading}
+        selectedTalukId={selectedTalukId}
         onAuthDialogChange={handleDialogOpenChange}
         onExamNameModalChange={setShowExamNameModal}
         onUnfilledSchoolsModalChange={setShowUnfilledSchoolsModal}
@@ -296,7 +256,6 @@ Schools with unfilled marks:
             selectedExamName
           );
         }}
-        onUnfilledSchoolsExamNameSubmit={handleDownloadUnfilledSchools}
       />
     </div>
   );
