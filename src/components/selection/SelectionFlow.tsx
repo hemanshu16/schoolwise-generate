@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { schools, taluks } from "@/utils/mock-data";
 import DistrictSelector from "@/components/selection/DistrictSelector";
 import TalukSelector from "@/components/selection/TalukaSelector";
 import SchoolList from "@/components/selection/SchoolList";
@@ -29,14 +28,16 @@ const SelectionFlow = ({
   onShowUnfilledSchools,
   onSelectionChange
 }: SelectionFlowProps) => {
-  const { districts, refreshDistricts, loading } = useSupabase();
+  const { districts, refreshDistricts, loading, taluks ,getTalukById } = useSupabase();
 
   // Refresh districts if needed
   useEffect(() => {
     if (districts.length === 0 && !loading) {
       refreshDistricts();
     }
-  }, [districts, refreshDistricts, loading]);
+    
+  
+  }, []);
 
   // Selection state
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
@@ -48,6 +49,7 @@ const SelectionFlow = ({
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isTalukReportLoading, setIsTalukReportLoading] = useState(false);
   const [isUnfilledSchoolsLoading, setIsUnfilledSchoolsLoading] = useState(false);
+  const [isDistrictReportLoading, setIsDistrictReportLoading] = useState(false);
 
   // Add download status state
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'generating' | 'downloading' | 'complete'>('idle');
@@ -62,7 +64,6 @@ const SelectionFlow = ({
 
   // Helpers for entity names
   const selectedDistrict = districts.find(d => d.id.toString() === selectedDistrictId);
-  const selectedTaluk = taluks.find(t => t.id === selectedTalukId);
 
   // Determine if report generation buttons should be shown
   const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId;
@@ -201,7 +202,7 @@ const SelectionFlow = ({
         // We'll just use the ID directly since we have it
         // The backend should be able to resolve the taluk name
         const talukId = selectedTalukId;
-
+        const taluk = await getTalukById(Number(talukId));
         // Make the API call to generate taluk report
         const response = await fetch('https://kiqn4rtsxo2syesxxtg7rc332u0xzvlu.lambda-url.us-east-1.on.aws/', {
           method: 'POST',
@@ -209,7 +210,7 @@ const SelectionFlow = ({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            taluk_name: "taluk_name", // Using placeholder as specified in the curl example
+            taluk_name: taluk.taluk, // Using actual taluk name from the taluk object
             exam_name: selectedExamName,
             taluk_id: talukId
           })
@@ -279,7 +280,78 @@ const SelectionFlow = ({
       }
     } else if (pendingReportType === "district" && selectedDistrictId) {
       setShowExamNameModal(false);
-      onGenerateReport("district", selectedDistrictId, selectedExamName);
+      setIsDistrictReportLoading(true);
+      setDownloadStatus('generating');
+      
+      try {
+        const response = await fetch('https://oukrxtnccd5zk6idd3wxardolq0hkoir.lambda-url.us-east-1.on.aws/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            district_id: selectedDistrictId,
+            test_name: selectedExamName
+          })
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Report generation API endpoint not found");
+          } else if (response.status === 400) {
+            const errorData = await response.json();
+            throw new Error(`Bad request: ${errorData.message || 'Invalid parameters'}`);
+          } else {
+            throw new Error(`Failed to generate report: ${response.statusText}`);
+          }
+        }
+
+        // Get the content type to verify we're getting a PDF
+        const contentType = response.headers.get('content-type');
+
+        // Basic verification that we're getting the expected file type
+        if (contentType && (contentType.includes('application/pdf') || contentType.includes('application/octet-stream'))) {
+          // Convert the response to a blob
+          const blob = await response.blob();
+
+          // Create a URL for the blob
+          const url = window.URL.createObjectURL(blob);
+
+          // Create a temporary link element to trigger the download
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `District_Report_${selectedExamName.replace(/\s+/g, '_')}_${selectedDistrictId}.pdf`;
+          document.body.appendChild(a);
+
+          // Trigger the download
+          a.click();
+
+          // Clean up
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          toast.success(`District report downloaded successfully`);
+        } else {
+          // If we didn't get a PDF, try to handle it as a JSON response with an error
+          try {
+            const errorData = await response.json();
+            throw new Error(`Failed to generate PDF: ${errorData.message || 'Unknown error'}`);
+          } catch (jsonError) {
+            // If we can't parse as JSON either, throw a generic error
+            throw new Error("Received an unexpected response format from the server");
+          }
+        }
+      } catch (error) {
+        console.error('Error generating district report:', error);
+        if (error instanceof Error) {
+          toast.error(`Failed to generate district report: ${error.message}`);
+        } else {
+          toast.error('Failed to generate district report');
+        }
+      } finally {
+        setIsDistrictReportLoading(false);
+        setDownloadStatus('idle');
+      }
     } else if (pendingReportType === "school" && selectedSchoolId) {
       setShowExamNameModal(false);
       onGenerateReport("school", selectedSchoolId, selectedExamName);
@@ -309,14 +381,14 @@ const SelectionFlow = ({
 
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    const school = schools.find(s => s.id === schoolId);
-    if (school) {
-      // Don't set loading state yet - wait until an exam is selected
-      setShowExamNameModal(true);
-      setPendingReportType("school");
-      // The actual report generation will happen when exam name is selected
-      // and handleExamNameSubmit is called
-    }
+    // const school = schools.find(s => s.id === schoolId);
+    // if (school) {
+    //   // Don't set loading state yet - wait until an exam is selected
+    //   setShowExamNameModal(true);
+    //   setPendingReportType("school");
+    //   // The actual report generation will happen when exam name is selected
+    //   // and handleExamNameSubmit is called
+    // }
   };
 
   // Helper function to get decorative step number
@@ -367,9 +439,9 @@ const SelectionFlow = ({
               <button
                 onClick={handleGenerateDistrictReport}
                 className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-primary text-white text-sm rounded-md hover:bg-primary/90 transition-all"
-                disabled={isTalukReportLoading || isUnfilledSchoolsLoading}
+                disabled={isTalukReportLoading || isUnfilledSchoolsLoading || isDistrictReportLoading}
               >
-                {isTalukReportLoading ? (
+                {isDistrictReportLoading ? (
                   <>
                     <div className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin mr-1.5" />
                     Generating...
