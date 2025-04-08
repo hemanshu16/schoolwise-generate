@@ -10,9 +10,13 @@ interface TalukSelectorProps {
   onSelect: (talukId: string) => void;
   selectedTalukId: string | null;
   className?: string;
+  selectedTaluk: Taluk | null;
+  setSelectedTalukId: (talukId: string) => void;
+  setSelectedTaluk: (taluk: Taluk) => void;
+  userRole?: "teacher" | "district_officer" | "taluk_officer";
 }
 
-const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: TalukSelectorProps) => {
+const TalukSelector = ({ districtId, onSelect, selectedTalukId, className, selectedTaluk, setSelectedTalukId, setSelectedTaluk, userRole  }: TalukSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredTaluks, setFilteredTaluks] = useState<Taluk[]>([]);
@@ -42,8 +46,6 @@ const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: Tal
     setSearchTerm("");
   };
 
-  const selectedTaluk = taluks.find((t) => t.id.toString() === selectedTalukId);
-
   return (
     <div className={cn(
       "relative w-full", 
@@ -62,11 +64,13 @@ const TalukSelector = ({ districtId, onSelect, selectedTalukId, className }: Tal
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        disabled={userRole === "taluk_officer" && selectedTaluk !== null}
         className={cn(
           "flex items-center justify-between w-full px-3 py-2 sm:py-2.5 text-left transition-all duration-300 text-sm",
           "bg-white border rounded-lg shadow-sm hover:shadow-md hover:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-secondary/20",
           selectedTaluk ? "border-secondary/20" : "border-gray-200",
-          selectedTaluk ? "text-foreground" : "text-muted-foreground"
+          selectedTaluk ? "text-foreground" : "text-muted-foreground",
+          userRole === "taluk_officer" && selectedTaluk !== null && "opacity-50 cursor-not-allowed"
         )}
       >
         <span className="flex items-center gap-2">

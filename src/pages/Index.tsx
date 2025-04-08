@@ -3,7 +3,6 @@ import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Container from "@/components/layout/Container";
 import SelectionBadges from "@/components/selection/SelectionBadges";
-import ReportView from "@/components/reports/ReportView";
 import { cn } from "@/lib/utils";
 import { OfficerPermission } from "@/components/auth/OfficerAuth";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { toast } from "sonner";
 import RoleSelectionView from "@/components/selection/RoleSelectionView";
 import SelectionFlow from "@/components/selection/SelectionFlow";
 import AuthenticationModals from "@/components/auth/AuthenticationModals";
-import { schools } from "@/utils/mock-data";
 import { useSupabase } from "@/lib/context/SupabaseContext";
 import { District, Taluk } from "@/lib/context/SupabaseContext";
 import * as XLSX from 'xlsx';
@@ -27,7 +25,7 @@ const Index = () => {
   }, [districts, refreshDistricts, loading]);
   
   // User role state
-  const [userRole, setUserRole] = useState<"teacher" | "officer" | null>(null);
+  const [userRole, setUserRole] = useState<"teacher" | "district_officer" | "taluk_officer" | null>(null);
   const [officerPermission, setOfficerPermission] = useState<OfficerPermission>("none");
   const [isOfficerAuthenticated, setIsOfficerAuthenticated] = useState(false);
   
@@ -35,6 +33,8 @@ const Index = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
   const [selectedTalukId, setSelectedTalukId] = useState<string | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
+  const [selectedTaluk, setSelectedTaluk] = useState<Taluk | null>(null);
   const [examName, setExamName] = useState<string>("");
   
   // Authentication and view state
@@ -62,7 +62,7 @@ const Index = () => {
   };
   
   // Handlers
-  const handleRoleSelect = (role: "teacher" | "officer") => {
+  const handleRoleSelect = (role: "teacher" | "district_officer" | "taluk_officer") => {
     setUserRole(role);
     setSelectedDistrictId(null);
     setSelectedTalukId(null);
@@ -72,7 +72,7 @@ const Index = () => {
     setIsOfficerAuthenticated(false);
     
     // If officer, show auth dialog
-    if (role === "officer") {
+    if (role !== "teacher") {
       setShowAuthModal(true);
       setCurrentAuthEntity(null);
     }
@@ -130,6 +130,11 @@ const Index = () => {
     setShowUnfilledSchoolsModal(false);
     setShowExamNameModal(false);
     setPendingReportType(null);
+    setSelectedDistrict(null);
+    setSelectedDistrictId(null);
+    setSelectedTaluk(null);
+    setSelectedTalukId(null);
+    setSelectedSchoolId(null);
   };
 
   // Handle going back to role selection
@@ -140,11 +145,12 @@ const Index = () => {
   // Handle dialog close - reset to role selection if officer not authenticated yet
   const handleDialogOpenChange = (open: boolean) => {
     setShowAuthModal(open);
-    if (!open && userRole === "officer" && !isOfficerAuthenticated) {
+    if (!open && userRole !== "teacher" && !isOfficerAuthenticated) {
       setUserRole(null);
     }
   };
-  
+
+  console.log(userRole);
   return (
     <div className="min-h-screen bg-white">
       <Header />
@@ -174,10 +180,9 @@ const Index = () => {
               {/* Selection badges */}
               <SelectionBadges 
                 userRole={userRole}
-                selectedDistrictId={selectedDistrictId}
-                selectedTalukId={selectedTalukId}
-                selectedSchoolId={selectedSchoolId}
-                examName={examName}
+                districtName={selectedDistrict?.district}
+                talukName={selectedTaluk?.taluk}
+                schoolName={selectedSchoolId}
                 isAuthenticated={isAuthenticated}
                 onReset={handleReset}
               />
@@ -196,25 +201,18 @@ const Index = () => {
                     isOfficerAuthenticated={isOfficerAuthenticated}
                     onGenerateReport={handleGenerateReport}
                     onShowUnfilledSchools={handleShowUnfilledSchools}
+                    selectedDistrictId={selectedDistrictId}
+                    selectedDistrict={selectedDistrict}
+                    setSelectedDistrictId={setSelectedDistrictId}
+                    setSelectedDistrict={setSelectedDistrict}
+                    setSelectedTalukId={setSelectedTalukId}
+                    setSelectedTaluk={setSelectedTaluk}
+                    selectedTalukId={selectedTalukId}
+                    selectedTaluk={selectedTaluk}
                     onSelectionChange={(districtId, talukId) => {
-                      if (districtId) setSelectedDistrictId(districtId);
+                      if (districtId) setSelectedDistrictId(selectedDistrictId);
                       if (talukId) setSelectedTalukId(talukId);
                     }}
-                  />
-                )}
-                
-                {/* Report View */}
-                {isAuthenticated && currentAuthEntity && (
-                  <ReportView 
-                    type={currentAuthEntity} 
-                    name={
-                      currentAuthEntity === "district" 
-                        ? findDistrictById(selectedDistrictId)?.district || "" 
-                        : currentAuthEntity === "taluk" 
-                          ? findTalukById(selectedTalukId)?.taluk || "" 
-                          : schools.find(s => s.id === selectedSchoolId)?.name || ""
-                    }
-                    examName={examName}
                   />
                 )}
               </div>
@@ -229,6 +227,7 @@ const Index = () => {
         showExamNameModal={showExamNameModal}
         showUnfilledSchoolsModal={showUnfilledSchoolsModal}
         currentAuthEntity={currentAuthEntity}
+        setSelectedDistrict={setSelectedDistrict}
         entityId={
           currentAuthEntity === "district" 
             ? selectedDistrictId 
@@ -237,6 +236,7 @@ const Index = () => {
               : selectedSchoolId
         }
         userRole={userRole}
+        setUserRole={setUserRole}
         pendingReportType={pendingReportType}
         isDownloading={isDownloading}
         selectedTalukId={selectedTalukId}
@@ -245,6 +245,9 @@ const Index = () => {
         onUnfilledSchoolsModalChange={setShowUnfilledSchoolsModal}
         onOfficerAuthenticate={handleOfficerAuthenticate}
         onAuthenticate={handleAuthenticate}
+        setSelectedDistrictId={setSelectedDistrictId}
+        setSelectedTalukId={setSelectedTalukId}
+        setSelectedTaluk={setSelectedTaluk}
         onExamNameSubmit={(selectedExamName) => {
           setExamName(selectedExamName);
           handleGenerateReport(pendingReportType || "school", 

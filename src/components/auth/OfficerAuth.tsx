@@ -1,65 +1,85 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DialogTitle } from "@/components/ui/dialog";
+import { District, Taluk, useSupabase } from "@/lib/context/SupabaseContext";
 
 export type OfficerPermission = "district" | "taluk" | "none";
 
 interface OfficerAuthProps {
   onAuthenticate: (permission: OfficerPermission) => void;
+  setSelectedDistrictId: (districtId: string) => void;
+  setSelectedDistrict: (district: District) => void;
+  setSelectedTalukId: (talukId: string) => void;
+  setSelectedTaluk: (taluk: Taluk) => void;
+  setUserRole: (role: "teacher" | "district_officer" | "taluk_officer") => void;
 }
 
-const OfficerAuth = ({ onAuthenticate }: OfficerAuthProps) => {
+const OfficerAuth = ({ onAuthenticate, setSelectedDistrictId, setSelectedDistrict, setSelectedTalukId, setSelectedTaluk, setUserRole }: OfficerAuthProps) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { checkDistrictPassword, checkTalukPassword, getDistrictById } = useSupabase();
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     
-    // Simulating authentication
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Check password for different permission levels
-      // Adding support for district passwords from the mock data (1234, 5678, etc.)
-      if (password === "district123" || password === "1234" || password === "5678" || 
-          password === "9012" || password === "3456") {
-        toast.success("Authenticated as District Officer");
+    try {
+      // First check if it's a district password
+      const districtResult = await checkDistrictPassword(password);
+      if (districtResult.success) {
+        toast.success(`Authenticated as District Officer for ${districtResult.district.district}`);
         onAuthenticate("district");
-      } else if (password === "taluk123" || password === "1111" || password === "2222" ||
-                password === "3333" || password === "4444" || password === "5555" ||
-                password === "6666" || password === "7777" || password === "8888") {
-        toast.success("Authenticated as Taluk Officer");
-        onAuthenticate("taluk");
-      } else {
-        setError("Invalid password. Please try again.");
-        toast.error("Invalid password");
-        onAuthenticate("none");
+        setSelectedDistrict(districtResult.district);
+        setSelectedDistrictId(districtResult.district.id);
+        setUserRole("district_officer");
+        return;
       }
-    }, 800);
+      
+      // If not a district password, check if it's a taluk password
+      const talukResult = await checkTalukPassword(password);
+      if (talukResult.success) {
+        toast.success(`Authenticated as Taluk Officer for ${talukResult.taluk.taluk}`);
+        setSelectedTalukId(talukResult.taluk.id);
+        setSelectedTaluk(talukResult.taluk);
+        const district = await getDistrictById(talukResult.taluk.districtId);
+        setSelectedDistrict(district);
+        setSelectedDistrictId(district.id.toString());
+        onAuthenticate("taluk");
+        setUserRole("taluk_officer");
+        return;
+      }
+      
+      // If neither district nor taluk password
+      setError("Invalid password. Please try again.");
+      toast.error("Invalid password");
+      onAuthenticate("none");
+    } catch (err) {
+      console.log(err);
+      setError("Authentication error. Please try again.");
+      toast.error("Authentication error");
+      onAuthenticate("none");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="w-full max-w-md mx-auto p-6">
-      <DialogTitle className="sr-only">Officer Authentication</DialogTitle>
+      <DialogTitle className="sr-only">Officer Authentication </DialogTitle>
       <div className="mb-6 text-center">
         <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <Lock className="w-8 h-8 text-primary" />
         </div>
-        <h2 className="text-xl font-semibold">Officer Authentication</h2>
+        <h2 className="text-xl font-semibold">Officer Authentication </h2>
         <p className="text-sm text-muted-foreground mt-1">
           Enter your password to access officer reports
         </p>
-        <div className="mt-2 text-xs text-muted-foreground">
-          <p>District passwords: 1234, 5678, 9012, 3456</p>
-          <p>Taluk passwords: 1111, 2222, 3333, 4444, 5555, 6666, 7777, 8888</p>
-        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">

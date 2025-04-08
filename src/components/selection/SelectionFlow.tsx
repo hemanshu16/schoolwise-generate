@@ -7,17 +7,25 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ExamNameInput from "@/components/reports/ExamNameInput";
-import { AlertTriangle, FileText, ChevronDown } from "lucide-react";
-import { useSupabase } from "@/lib/context/SupabaseContext";
+import { AlertTriangle, FileText } from "lucide-react";
+import { District, Taluk, useSupabase } from "@/lib/context/SupabaseContext";
 import * as XLSX from 'xlsx';
 
 interface SelectionFlowProps {
-  userRole: "teacher" | "officer";
+  userRole: "teacher" | "district_officer" | "taluk_officer";
   officerPermission: "district" | "taluk" | "none";
   isOfficerAuthenticated: boolean;
   onGenerateReport: (type: "district" | "taluk" | "school", entityId: string, examName: string) => void;
   onShowUnfilledSchools: (examName: string, talukId?: string) => void;
   onSelectionChange?: (districtId: string | null, talukId: string | null) => void;
+  selectedDistrictId: string | null;
+  selectedDistrict: District | null;
+  setSelectedDistrictId: (districtId: string) => void;
+  setSelectedDistrict: (district: District) => void;
+  selectedTalukId: string | null;
+  selectedTaluk: Taluk | null;
+  setSelectedTalukId: (talukId: string) => void;
+  setSelectedTaluk: (taluk: Taluk) => void;
 }
 
 const SelectionFlow = ({
@@ -26,25 +34,29 @@ const SelectionFlow = ({
   isOfficerAuthenticated,
   onGenerateReport,
   onShowUnfilledSchools,
-  onSelectionChange
+  onSelectionChange,
+  selectedDistrictId,
+  selectedDistrict,
+  setSelectedDistrictId,
+  setSelectedDistrict,
+  selectedTalukId,
+  selectedTaluk,
+  setSelectedTalukId,
+  setSelectedTaluk
 }: SelectionFlowProps) => {
-  const { districts, refreshDistricts, loading, taluks ,getTalukById } = useSupabase();
-
+  const { districts, refreshDistricts, loading, taluks, getTalukById } = useSupabase();
   // Refresh districts if needed
   useEffect(() => {
     if (districts.length === 0 && !loading) {
       refreshDistricts();
     }
-    
-  
   }, []);
 
+
   // Selection state
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
-  const [selectedTalukId, setSelectedTalukId] = useState<string | null>(null);
   const [showExamNameModal, setShowExamNameModal] = useState(false);
   // Update the type to include "school"
-  const [pendingReportType, setPendingReportType] = useState<"district" | "taluk" | "unfilledSchools"| "school" | null>(null);
+  const [pendingReportType, setPendingReportType] = useState<"district" | "taluk" | "unfilledSchools" | "school" | null>(null);
   const [examName, setExamName] = useState<string>("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isTalukReportLoading, setIsTalukReportLoading] = useState(false);
@@ -63,20 +75,22 @@ const SelectionFlow = ({
   const mountSchoolList = useDelayedMount(Boolean(showSchoolList));
 
   // Helpers for entity names
-  const selectedDistrict = districts.find(d => d.id.toString() === selectedDistrictId);
 
   // Determine if report generation buttons should be shown
-  const showDistrictReportButton = userRole === "officer" && officerPermission === "district" && selectedDistrictId;
-  const showTalukReportButton = userRole === "officer" && (officerPermission === "district" || officerPermission === "taluk") && selectedTalukId;
+  const showDistrictReportButton = userRole !== "teacher" && officerPermission === "district" && selectedDistrictId;
+  const showTalukReportButton = userRole !== "teacher" && (officerPermission === "district" || officerPermission === "taluk") && selectedTalukId;
 
   // Handlers
   const handleDistrictSelect = (districtId: string) => {
+
     setSelectedDistrictId(districtId);
+    setSelectedDistrict(districts.find(d => d.id.toString() === districtId));
     setSelectedTalukId(null);
   };
 
   const handleTalukSelect = (talukId: string) => {
     setSelectedTalukId(talukId);
+    setSelectedTaluk(taluks.find(t => t.id.toString() === talukId));
   };
 
   const handleGenerateDistrictReport = () => {
@@ -107,15 +121,15 @@ const SelectionFlow = ({
     try {
       // Loading state is already set in handleExamNameSubmit
       toast.info(`Fetching unfilled schools data for taluk ${talukId} and exam ${selectedExamName}...`);
-      
+
       const requestBody = {
         taluk_id: talukId,
         exam_name: selectedExamName
       };
-      
+
       console.log("Request body:", requestBody);
-      
-      const response = await fetch('https://3klcvnba2ts4f3dguo7r7cts2q0eyplc.lambda-url.us-east-1.on.aws/', {
+
+      const response = await fetch(import.meta.env.VITE_PUBLIC_UNFILLED_SCHOOLS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,47 +139,47 @@ const SelectionFlow = ({
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Create workbook and worksheet
         const wb = XLSX.utils.book_new();
-        
+
         // Convert data to worksheet format
         const worksheetData = [];
-        
+
         // Add header row
         worksheetData.push(["Unfilled Schools", "Errored Schools"]);
-        
+
         // Get the maximum length between unfilled and errored schools
         const maxLength = Math.max(
-          data.unfilled_schools.length, 
+          data.unfilled_schools.length,
           data.errored_schools.length
         );
-        
+
         // Add data rows
         for (let i = 0; i < maxLength; i++) {
           const unfilled = data.unfilled_schools[i] || '';
           const errored = data.errored_schools[i] || '';
           worksheetData.push([unfilled, errored]);
         }
-        
+
         // Create worksheet
         const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-        
+
         // Set column widths
         const columnWidths = [
           { wch: 100 }, // Unfilled Schools column - wider to accommodate school names
           { wch: 100 }  // Errored Schools column - wider to accommodate school names
         ];
-        
+
         // Apply column widths
         ws['!cols'] = columnWidths;
-        
+
         // Add worksheet to workbook
         XLSX.utils.book_append_sheet(wb, ws, "Unfilled Schools");
-        
+
         // Generate Excel file
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        
+
         // Create blob and download
         const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = window.URL.createObjectURL(blob);
@@ -174,7 +188,7 @@ const SelectionFlow = ({
         a.download = `unfilled_schools_${selectedExamName.replace(/\s+/g, '_')}.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
-        
+
         toast.success("Downloaded unfilled schools report");
       } else {
         toast.error("Failed to fetch unfilled schools data");
@@ -204,7 +218,7 @@ const SelectionFlow = ({
         const talukId = selectedTalukId;
         const taluk = await getTalukById(Number(talukId));
         // Make the API call to generate taluk report
-        const response = await fetch('https://kiqn4rtsxo2syesxxtg7rc332u0xzvlu.lambda-url.us-east-1.on.aws/', {
+        const response = await fetch(import.meta.env.VITE_PUBLIC_TALUK_REPORT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -282,9 +296,9 @@ const SelectionFlow = ({
       setShowExamNameModal(false);
       setIsDistrictReportLoading(true);
       setDownloadStatus('generating');
-      
+
       try {
-        const response = await fetch('https://oukrxtnccd5zk6idd3wxardolq0hkoir.lambda-url.us-east-1.on.aws/', {
+        const response = await fetch(import.meta.env.VITE_PUBLIC_DISTRICT_REPORT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -381,14 +395,7 @@ const SelectionFlow = ({
 
   const handleSchoolSelect = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    // const school = schools.find(s => s.id === schoolId);
-    // if (school) {
-    //   // Don't set loading state yet - wait until an exam is selected
-    //   setShowExamNameModal(true);
-    //   setPendingReportType("school");
-    //   // The actual report generation will happen when exam name is selected
-    //   // and handleExamNameSubmit is called
-    // }
+
   };
 
   // Helper function to get decorative step number
@@ -406,6 +413,7 @@ const SelectionFlow = ({
       onSelectionChange(selectedDistrictId, selectedTalukId);
     }
   }, [selectedDistrictId, selectedTalukId, onSelectionChange]);
+
 
   return (
     <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12 w-full max-w-full">
@@ -431,6 +439,7 @@ const SelectionFlow = ({
                 "w-full",
                 !selectedDistrictId && "max-w-md"
               )}
+              role={userRole}
             />
           </div>
 
@@ -471,6 +480,10 @@ const SelectionFlow = ({
               districtId={selectedDistrictId}
               onSelect={handleTalukSelect}
               selectedTalukId={selectedTalukId}
+              selectedTaluk={selectedTaluk}
+              setSelectedTalukId={setSelectedTalukId}
+              setSelectedTaluk={setSelectedTaluk}
+              userRole={userRole}
               className="w-full"
             />
 

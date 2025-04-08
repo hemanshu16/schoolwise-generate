@@ -265,7 +265,7 @@ const ModernSelectionFlow = ({
             className="bg-teal-700 hover:bg-teal-800 text-white font-medium px-5 py-2.5 shadow-sm border border-teal-800"
           >
             <FileText className="h-4 w-4 mr-2" />
-            Generate District Report
+            Generate District Report 
           </Button>
         </div>
       )}

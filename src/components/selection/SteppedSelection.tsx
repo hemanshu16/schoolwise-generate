@@ -103,7 +103,7 @@ const SteppedSelection = ({
                 className="w-full flex items-center p-4 bg-teal-50 text-teal-800 hover:bg-teal-100 transition-colors text-left border-y border-teal-100"
                 onClick={() => setExpandedDistrict(!expandedDistrict)}
               >
-                <span className="mr-1 font-medium">Select District</span>
+                <span className="mr-1 font-medium">Select District 12</span>
                 <ChevronRight className={cn(
                   "ml-auto h-5 w-5 transition-transform", 
                   expandedDistrict ? "rotate-90" : ""

@@ -21,7 +21,7 @@ interface SchoolListProps {
   talukId: string;
   onSelectSchool: (schoolId: string) => void;
   className?: string;
-  userRole?: "teacher" | "officer";
+  userRole?: "teacher" | "district_officer" | "taluk_officer";
 }
 
 const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }: SchoolListProps) => {
@@ -169,7 +169,7 @@ const SchoolList = ({ talukId, onSelectSchool, className, userRole = "teacher" }
         const schoolName = school.school_name.split("_")[1];
         
         // For officer, download the report directly
-        if (userRole === 'officer') {
+        if (userRole === 'district_officer' || userRole === 'taluk_officer') {
           downloadReport(school.sheet_id, examName);
           toast.success(`Generating report for ${schoolName} - ${examName}`);
         } else {

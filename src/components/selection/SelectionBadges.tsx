@@ -1,4 +1,3 @@
-import { schools, taluks } from "@/utils/mock-data";
 import SelectionBadge from "@/components/ui/SelectionBadge";
 import { useSupabase } from "@/lib/context/SupabaseContext";
 import { useEffect, useState } from "react";
@@ -6,57 +5,24 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SelectionBadgesProps {
-  userRole: "teacher" | "officer" | null;
-  selectedDistrictId: string | null;
-  selectedTalukId: string | null;
-  selectedSchoolId: string | null;
-  examName: string;
+  userRole: "teacher" | "district_officer" | "taluk_officer" | null;
+  districtName: string | null;
+  talukName: string | null;
+  schoolName: string | null;
   isAuthenticated: boolean;
   onReset: () => void;
 }
 
 const SelectionBadges = ({
   userRole,
-  selectedDistrictId,
-  selectedTalukId,
-  selectedSchoolId,
-  examName,
+  districtName,
+  talukName,
+  schoolName,
   isAuthenticated,
   onReset
 }: SelectionBadgesProps) => {
-  const { districts, taluks: dbTaluks, refreshDistricts, loading } = useSupabase();
-  const [talukName, setTalukName] = useState<string | undefined>();
-  
-  // Refresh districts if needed
-  useEffect(() => {
-    if (districts.length === 0 && !loading) {
-      refreshDistricts();
-    }
-  }, [districts, refreshDistricts, loading]);
-  
-  // Fetch taluk name when selectedTalukId changes
-  useEffect(() => {
-    if (selectedTalukId) {
-      // First try to get from database
-      const dbTaluk = dbTaluks.find(t => t.id.toString() === selectedTalukId);
-      if (dbTaluk) {
-        setTalukName(dbTaluk.taluk);
-        return;
-      }
-      
-      // Fallback to mock data
-      const mockTaluk = taluks.find(t => t.id === selectedTalukId);
-      if (mockTaluk) {
-        setTalukName(mockTaluk.name);
-      }
-    }
-  }, [selectedTalukId, dbTaluks]);
-  
-  // Helpers for entity names
-  const selectedDistrict = districts.find(d => d.id.toString() === selectedDistrictId);
-  const selectedSchool = schools.find(s => s.id === selectedSchoolId);
 
-  if (!selectedDistrictId && !selectedTalukId && !selectedSchoolId) {
+  if (!districtName && !talukName && !schoolName) {
     return null;
   }
 
@@ -71,16 +37,16 @@ const SelectionBadges = ({
         />
       )}
       
-      {selectedDistrictId && (
+      {districtName && (
         <SelectionBadge 
           label="District"
-          value={selectedDistrict?.district}
+          value={districtName}
           isActive={true}
           className="text-xs sm:text-sm"
         />
       )}
       
-      {selectedTalukId && (
+      {talukName && (
         <SelectionBadge 
           label="Taluk"
           value={talukName}
@@ -89,20 +55,10 @@ const SelectionBadges = ({
         />
       )}
       
-      {selectedSchoolId && isAuthenticated && (
+      {schoolName && isAuthenticated && (
         <SelectionBadge 
           label="School"
-          value={selectedSchool?.name}
-          isActive={true}
-          className="text-xs sm:text-sm"
-        />
-      )}
-
-      {/* Only show exam name if we're authenticated (viewing a report) */}
-      {examName && isAuthenticated && (
-        <SelectionBadge 
-          label="Exam"
-          value={examName}
+          value={schoolName}
           isActive={true}
           className="text-xs sm:text-sm"
         />

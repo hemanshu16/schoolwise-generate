@@ -9,15 +9,17 @@ interface DistrictSelectorProps {
   onSelect: (districtId: string) => void;
   selectedDistrictId: string | null;
   className?: string;
+  role?: string;
 }
 
-const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictSelectorProps) => {
+const DistrictSelector = ({ onSelect, selectedDistrictId, className, role }: DistrictSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredDistricts, setFilteredDistricts] = useState<District[]>([]);
   const { districts, refreshDistricts, loading } = useSupabase();
   const animation = useFadeAnimation(true);
 
+  const isDisabled = role === "district_officer" || role === "taluk_officer";
   useEffect(() => {
     refreshDistricts();
   }, []);
@@ -25,13 +27,19 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
   useEffect(() => {
     setFilteredDistricts(
       districts
-        .filter((district) => 
-          searchTerm ? 
-          district.district.toLowerCase().includes(searchTerm.toLowerCase()) : 
-          true
+        .filter((district) =>
+          searchTerm ?
+            district.district.toLowerCase().includes(searchTerm.toLowerCase()) :
+            true
         )
     );
   }, [districts, searchTerm]);
+
+  useEffect(() => {
+    if (selectedDistrictId) {
+      onSelect(selectedDistrictId);
+    }
+  }, []);
 
   const handleSelect = (districtId: string) => {
     onSelect(districtId);
@@ -43,10 +51,9 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
 
   return (
     <div className={cn(
-      "relative w-full", 
-      animation, 
+      "relative w-full",
+      animation,
       className,
-      // Apply z-index when dropdown is open to ensure it's above other elements
       isOpen ? "z-50" : "z-0"
     )}>
       <div className="mb-1 sm:mb-2">
@@ -55,17 +62,19 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
           Select District
         </div>
       </div>
-      
+
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !isDisabled && setIsOpen(!isOpen)}
+        disabled={isDisabled}
         className={cn(
           "flex items-center justify-between w-full px-3 py-2 sm:py-2.5 text-left transition-all duration-300 text-sm",
           "bg-white border rounded-lg shadow-sm hover:shadow-md hover:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20",
           selectedDistrict ? "border-primary/20" : "border-gray-200",
-          selectedDistrict ? "text-foreground" : "text-muted-foreground"
+          selectedDistrict ? "text-foreground" : "text-muted-foreground",
+          isDisabled && "opacity-70 cursor-not-allowed"
         )}
-      > 
+      >
         <span className="flex items-center gap-2">
           {selectedDistrict ? (
             <>
@@ -83,13 +92,15 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
             </>
           )}
         </span>
-        <ChevronDown className={cn(
-          "h-3 w-3 text-gray-400 transition-transform duration-300", 
-          isOpen ? "transform rotate-180" : ""
-        )} />
+        {!isDisabled && (
+          <ChevronDown className={cn(
+            "h-3 w-3 text-gray-400 transition-transform duration-300",
+            isOpen ? "transform rotate-180" : ""
+          )} />
+        )}
       </button>
 
-      {isOpen && (
+      {isOpen && !isDisabled && (
         <div className="absolute left-0 right-0 z-40 mt-1 bg-white rounded-lg shadow-lg border border-gray-100 animate-scale-in overflow-hidden">
           <div className="p-2 border-b border-gray-100">
             <div className="relative">
@@ -104,7 +115,7 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
               <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
             </div>
           </div>
-          
+
           {loading ? (
             <div className="py-3 flex items-center justify-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
@@ -119,22 +130,22 @@ const DistrictSelector = ({ onSelect, selectedDistrictId, className }: DistrictS
                       onClick={() => handleSelect(district.id.toString())}
                       className={cn(
                         "flex items-center gap-2 w-full px-2 py-1.5 text-left rounded-lg transition-colors text-xs",
-                        selectedDistrictId === district.id.toString() 
-                          ? "bg-primary/10 text-primary" 
+                        selectedDistrictId === district.id.toString()
+                          ? "bg-primary/10 text-primary"
                           : "hover:bg-gray-50 text-gray-700"
                       )}
                     >
                       <div className={cn(
                         "flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full",
-                        selectedDistrictId === district.id.toString() 
-                          ? "bg-primary/10 text-primary" 
+                        selectedDistrictId === district.id.toString()
+                          ? "bg-primary/10 text-primary"
                           : "bg-gray-100 text-gray-500"
                       )}>
                         <MapPin className="h-3 w-3" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className={cn(
-                          "block truncate", 
+                          "block truncate",
                           selectedDistrictId === district.id.toString() ? "font-medium" : ""
                         )}>
                           {district.district}
